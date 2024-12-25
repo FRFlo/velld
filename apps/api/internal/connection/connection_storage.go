@@ -73,12 +73,12 @@ func (s *ConnectionStorage) GetConnection(id string) (*StoredConnection, error) 
 		&encryptedPassword,
 		&conn.DatabaseName,
 		&conn.SSL,
+		&conn.DatabaseSize,
 		&conn.CreatedAt,
 		&conn.UpdatedAt,
 		&conn.LastConnectedAt,
 		&conn.UserID,
 		&conn.Status,
-		&conn.DatabaseSize,
 	)
 	if err != nil {
 		return nil, err
@@ -121,12 +121,12 @@ func (s *ConnectionStorage) ListConnections(userID uuid.UUID) ([]StoredConnectio
 			&encryptedPassword,
 			&conn.DatabaseName,
 			&conn.SSL,
+			&conn.DatabaseSize,
 			&conn.CreatedAt,
 			&conn.UpdatedAt,
 			&conn.LastConnectedAt,
 			&conn.UserID,
 			&conn.Status,
-			&conn.DatabaseSize,
 		)
 		if err != nil {
 			return nil, err
