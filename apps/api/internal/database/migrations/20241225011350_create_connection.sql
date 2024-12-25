@@ -15,7 +15,7 @@ CREATE TABLE connections (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_connected_at TIMESTAMP,
     user_id UUID REFERENCES users(id),
-    status VARCHAR(50) DEFAULT 'active'
+    status VARCHAR(50) DEFAULT 'connected'
 );
 
 CREATE INDEX idx_connections_user_id ON connections(user_id);
