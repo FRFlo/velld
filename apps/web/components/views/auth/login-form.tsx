@@ -4,18 +4,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLogin } from "@/hooks/use-auth";
 import Link from "next/link";
 
 export function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
+  
+  const { mutate: login, isPending } = useLogin();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsLoading(true);
-    
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    login(formData);
   }
 
   return (
@@ -27,8 +36,10 @@ export function LoginForm() {
             id="username"
             placeholder="Enter your username"
             type="text"
-            disabled={isLoading}
+            disabled={isPending}
             required
+            value={formData.username}
+            onChange={handleChange}
           />
         </div>
         <div className="space-y-2">
@@ -37,14 +48,16 @@ export function LoginForm() {
             id="password"
             placeholder="Enter your password"
             type="password"
-            disabled={isLoading}
+            disabled={isPending}
             required
+            value={formData.password}
+            onChange={handleChange}
           />
         </div>
       </div>
       
-      <Button className="w-full" type="submit" disabled={isLoading}>
-        {isLoading ? "Signing in..." : "Sign in"}
+      <Button className="w-full" type="submit" disabled={isPending}>
+        {isPending ? "Signing in..." : "Sign in"}
       </Button>
 
       <div className="text-center text-sm">
