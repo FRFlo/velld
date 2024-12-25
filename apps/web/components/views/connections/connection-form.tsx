@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { DatabaseConnection } from '@/types/connection';
+import { useConnections } from "@/hooks/use-connections";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
-import { testConnection, saveConnection } from '@/lib/api/connections';
+import { Input } from '@/components/ui/input';
 
 interface ConnectionFormProps {
   onSuccess?: () => void;
@@ -14,25 +14,24 @@ interface ConnectionFormProps {
 }
 
 export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<DatabaseConnection>>({
-    type: 'postgresql',
-    port: 5432,
-    ssl: false,
+  const [formData, setFormData] = useState<DatabaseConnection>({
+    name: "",
+    type: "",
+    host: "",
+    port: 0,
+    username: "",
+    password: "",
+    database: "",
+    ssl: true,
   });
+
+  const { addConnection, isAdding } = useConnections();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
-      await testConnection(formData as DatabaseConnection);
-      await saveConnection(formData as DatabaseConnection);
-      onSuccess?.();
-    } catch (error) {
-      console.error('Connection failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    addConnection(formData, {
+      onSuccess: () => onSuccess?.(),
+    });
   };
 
   return (
@@ -53,9 +52,14 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
           value={formData.type}
           onValueChange={(value) => setFormData({ ...formData, type: value as DatabaseConnection['type'] })}
         >
-          <option value="postgresql">PostgreSQL</option>
-          <option value="mysql">MySQL</option>
-          <option value="mongodb">MongoDB</option>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a database" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="postgresql">PostgreSQL</SelectItem>
+            <SelectItem value="mysql">MySQL</SelectItem>
+            <SelectItem value="mongodb">MongoDB</SelectItem>
+        </SelectContent>
         </Select>
       </div>
 
@@ -114,8 +118,8 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
       </div>
 
       <div className="flex space-x-2">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Testing Connection...' : 'Save Connection'}
+        <Button type="submit" disabled={isAdding}>
+          {isAdding ? 'Testing Connection...' : 'Save Connection'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel

@@ -3,8 +3,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { ConnectionsList } from "@/components/views/connections/connection-list";
 import { ConnectionStats } from "@/components/views/connections/connection-stats";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { AddConnectionDialog } from "@/components/views/connections/add-connection-dialog";
 
 export default function ConnectionsPage() {
   return (
@@ -19,9 +18,7 @@ export default function ConnectionsPage() {
                 Manage your database connections and sources
               </p>
             </div>
-            <Button className="flex items-center">
-              <Plus className="mr-2 h-4 w-4" /> New Connection
-            </Button>
+            <AddConnectionDialog/>
           </div>
 
           <div className="grid gap-6">
