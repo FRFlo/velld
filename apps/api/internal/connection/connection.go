@@ -90,7 +90,7 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		DatabaseName: config.Database,
 		SSL:          config.SSL,
 		UserID:       userID,
-		Status:       "active",
+		Status:       "connected",
 	}
 
 	if err := h.connStorage.SaveConnection(storedConn); err != nil {
