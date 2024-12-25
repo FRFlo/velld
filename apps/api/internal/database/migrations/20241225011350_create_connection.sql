@@ -11,6 +11,7 @@ CREATE TABLE connections (
     password VARCHAR(255) NOT NULL,
     database_name VARCHAR(255) NOT NULL,
     ssl BOOLEAN DEFAULT false,
+    database_size BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_connected_at TIMESTAMP,

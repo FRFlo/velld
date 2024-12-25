@@ -21,6 +21,7 @@ type StoredConnection struct {
 	LastConnectedAt *time.Time `json:"last_connected_at"`
 	UserID          uuid.UUID  `json:"user_id"`
 	Status          string     `json:"status"`
+	DatabaseSize    int64      `json:"database_size"`
 }
 
 type ConnectionConfig struct {

@@ -64,6 +64,11 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 	}
 	defer h.connManager.Disconnect(config.ID)
 
+	dbSize, err := h.connManager.GetDatabaseSize(config.ID)
+	if err != nil {
+		fmt.Printf("Failed to get database size: %v\n", err)
+	}
+
 	// Get user ID from context
 	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
 	if !ok {
@@ -91,6 +96,7 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		SSL:          config.SSL,
 		UserID:       userID,
 		Status:       "connected",
+		DatabaseSize: dbSize,
 	}
 
 	if err := h.connStorage.SaveConnection(storedConn); err != nil {

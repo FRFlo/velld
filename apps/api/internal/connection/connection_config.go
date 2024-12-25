@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -108,4 +109,54 @@ func (cm *ConnectionManager) Disconnect(id string) error {
 	default:
 		return fmt.Errorf("unknown connection type for id: %s", id)
 	}
+}
+
+func (cm *ConnectionManager) GetDatabaseSize(id string) (int64, error) {
+	conn, exists := cm.connections[id]
+	if !exists {
+		return 0, fmt.Errorf("connection not found: %s", id)
+	}
+
+	switch c := conn.(type) {
+	case *sql.DB:
+		return cm.getSQLDatabaseSize(c)
+	case *mongo.Client:
+		return cm.getMongoDBSize(c)
+	default:
+		return 0, fmt.Errorf("unknown connection type for id: %s", id)
+	}
+}
+
+func (cm *ConnectionManager) getSQLDatabaseSize(db *sql.DB) (int64, error) {
+	var query string
+
+	switch db.Driver().(type) {
+	case *pq.Driver:
+		query = "SELECT pg_database_size(current_database())"
+	case *mysql.MySQLDriver:
+		query = `SELECT SUM(data_length + index_length) 
+				 FROM information_schema.tables 
+				 WHERE table_schema = DATABASE()`
+	default:
+		return 0, fmt.Errorf("unsupported database type for size calculation")
+	}
+
+	var size int64
+	err := db.QueryRow(query).Scan(&size)
+	return size, err
+}
+
+func (cm *ConnectionManager) getMongoDBSize(client *mongo.Client) (int64, error) {
+	ctx := context.Background()
+	result := client.Database("admin").RunCommand(ctx, bson.D{
+		{"dbStats", 1},
+		{"scale", 1},
+	})
+
+	var stats bson.M
+	if err := result.Decode(&stats); err != nil {
+		return 0, err
+	}
+
+	return int64(stats["dataSize"].(float64)), nil
 }

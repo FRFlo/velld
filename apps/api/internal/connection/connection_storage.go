@@ -34,9 +34,9 @@ func (s *ConnectionStorage) SaveConnection(conn StoredConnection) error {
 	query := `
 		INSERT INTO connections (
 			id, name, type, host, port, username, password, 
-			database_name, ssl, user_id, status
+			database_name, ssl, user_id, status, database_size
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)`
 
 	_, err = s.db.Exec(
@@ -52,6 +52,7 @@ func (s *ConnectionStorage) SaveConnection(conn StoredConnection) error {
 		conn.SSL,
 		conn.UserID,
 		conn.Status,
+		conn.DatabaseSize,
 	)
 
 	return err
@@ -77,6 +78,7 @@ func (s *ConnectionStorage) GetConnection(id string) (*StoredConnection, error) 
 		&conn.LastConnectedAt,
 		&conn.UserID,
 		&conn.Status,
+		&conn.DatabaseSize,
 	)
 	if err != nil {
 		return nil, err
@@ -124,6 +126,7 @@ func (s *ConnectionStorage) ListConnections(userID uuid.UUID) ([]StoredConnectio
 			&conn.LastConnectedAt,
 			&conn.UserID,
 			&conn.Status,
+			&conn.DatabaseSize,
 		)
 		if err != nil {
 			return nil, err
