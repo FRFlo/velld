@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -45,4 +47,18 @@ func (s *AuthService) Login(username, password string) (string, error) {
 	})
 
 	return token.SignedString(s.jwtSecret)
+}
+
+func (s *AuthService) GetProfile(ctx context.Context) (string, error) {
+	claims, ok := ctx.Value("claims").(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token")
+	}
+
+	username, ok := claims["username"].(string)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	return username, nil
 }

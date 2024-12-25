@@ -44,3 +44,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(LoginResponse{Token: token})
 }
+
+func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
+	username, err := h.authService.GetProfile(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	json.NewEncoder(w).Encode(ProfileResponse{Username: username})
+}

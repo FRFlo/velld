@@ -16,3 +16,7 @@ type LoginRequest struct {
 type LoginResponse struct {
 	Token string `json:"token"`
 }
+
+type ProfileResponse struct {
+	Username string `json:"username"`
+}
