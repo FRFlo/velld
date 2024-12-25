@@ -5,8 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Database, ExternalLink, Power, Server, Settings } from 'lucide-react';
 import { useConnections } from "@/hooks/use-connections";
+import { Database, ExternalLink, Power, Server, Settings } from 'lucide-react';
+import { ConnectionListSkeleton } from "@/components/ui/skeleton/connection-list";
 
 const statusColors = {
   connected: 'bg-emerald-500/15 text-emerald-500',
@@ -35,7 +36,7 @@ export function ConnectionsList() {
         </div>
         <ScrollArea className="h-[500px] pr-4">
           {isLoading ? (
-            <div>Loading...</div>
+            <ConnectionListSkeleton />
           ) : (
             <div className="space-y-4">
               {connections?.map((connection) => (
