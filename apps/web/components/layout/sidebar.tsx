@@ -1,10 +1,11 @@
 "use client";
 
-import { Layout, Database, Server, Settings, History, Shield } from "lucide-react";
+import { Layout, Server, Settings, History, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Logo from "../ui/logo";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Layout },
@@ -20,8 +21,7 @@ export function Sidebar() {
   return (
     <div className="w-64 border-r bg-card/50 backdrop-blur-xl p-6 space-y-6">
       <div className="flex items-center space-x-2">
-        <Database className="h-6 w-6 text-primary" />
-        <h1 className="text-xl font-semibold">Velld</h1>
+        <Logo/>
       </div>
       <nav className="space-y-1">
         {navigation.map((item) => {

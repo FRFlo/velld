@@ -1,5 +1,5 @@
-import { Database } from "lucide-react";
 import { ReactNode } from "react";
+import Logo from "../ui/logo";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -15,8 +15,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <div className="w-full max-w-sm space-y-8">
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
-              <Database className="h-6 w-6" />
-              <span className="text-xl font-semibold">Velld</span>
+              <Logo/>
             </div>
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
@@ -28,8 +27,8 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       </div>
       
       {/* Right: Background Pattern */}
-      <div className="hidden lg:block bg-muted/40">
-        <div className="absolute inset-0 bg-grid-black/[0.02] bg-[size:24px_24px]" />
+      <div className="hidden lg:block bg-muted/40 relative">
+        <div className="absolute inset-0 bg-grid-black/[0.02] bg-[size:24px_24px] pointer-events-none" />
       </div>
     </div>
   );

@@ -50,7 +50,7 @@ export function LoginForm() {
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Dont have an account? </span>
         <Link 
-          href="/auth/register" 
+          href="/register" 
           className="font-medium hover:text-primary underline-offset-4 hover:underline"
         >
           Sign up

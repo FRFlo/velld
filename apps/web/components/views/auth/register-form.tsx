@@ -60,7 +60,7 @@ export function RegisterForm() {
       <div className="text-center text-sm">
         <span className="text-muted-foreground">Already have an account? </span>
         <Link 
-          href="/auth/login" 
+          href="/login" 
           className="font-medium hover:text-primary underline-offset-4 hover:underline"
         >
           Sign in
