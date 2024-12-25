@@ -14,7 +14,7 @@ export function useLogin() {
         title: "Success",
         description: "Logged in successfully",
       });
-      router.push("/dashboard");
+      router.push("/");
     },
     onError: () => {
       toast({

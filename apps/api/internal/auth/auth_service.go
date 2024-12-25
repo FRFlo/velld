@@ -50,7 +50,8 @@ func (s *AuthService) Login(username, password string) (string, error) {
 }
 
 func (s *AuthService) GetProfile(ctx context.Context) (string, error) {
-	claims, ok := ctx.Value("claims").(jwt.MapClaims)
+	claims, ok := ctx.Value("user").(jwt.MapClaims)
+
 	if !ok {
 		return "", errors.New("invalid token")
 	}

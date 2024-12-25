@@ -8,6 +8,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+const (
+    user = "user"
+)
+
 type AuthMiddleware struct {
 	jwtSecret []byte
 }
@@ -19,7 +23,7 @@ func NewAuthMiddleware(jwtSecret string) *AuthMiddleware {
 func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		if (authHeader == "") {
+		if authHeader == "" {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -35,7 +39,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
-		ctx := context.WithValue(r.Context(), "user", claims)
+		ctx := context.WithValue(r.Context(), user, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

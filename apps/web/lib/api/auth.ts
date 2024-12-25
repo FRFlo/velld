@@ -1,4 +1,4 @@
-import { Auth, AuthResponse } from "@/types/auth";
+import { Auth, AuthResponse, Profile } from "@/types/auth";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -35,16 +35,18 @@ export async function register(auth: Auth): Promise<void> {
   }
 }
 
-export async function logout(): Promise<void> {
-  localStorage.removeItem('token');
-  const response = await fetch(`${API_BASE}/api/auth/logout`, {
-    method: 'POST',
+export async function getProfile(): Promise<Profile> {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`${API_BASE}/api/auth/profile`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 
   if (!response.ok) {
-    throw new Error('Failed to logout');
+    throw new Error('Failed to get profile');
   }
+
+  return response.json();
 }
