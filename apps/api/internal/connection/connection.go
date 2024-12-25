@@ -2,18 +2,19 @@ package connection
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
-	"github.com/dendianugerah/velld/internal/database"
+	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
 type ConnectionHandler struct {
-	connManager *database.ConnectionManager
+	connManager *ConnectionManager
 	connStorage *ConnectionStorage
 }
 
-func NewConnectionHandler(cm *database.ConnectionManager, cs *ConnectionStorage) *ConnectionHandler {
+func NewConnectionHandler(cm *ConnectionManager, cs *ConnectionStorage) *ConnectionHandler {
 	return &ConnectionHandler{
 		connManager: cm,
 		connStorage: cs,
@@ -21,7 +22,7 @@ func NewConnectionHandler(cm *database.ConnectionManager, cs *ConnectionStorage)
 }
 
 func (h *ConnectionHandler) TestConnection(w http.ResponseWriter, r *http.Request) {
-	var config database.ConnectionConfig
+	var config ConnectionConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -31,7 +32,7 @@ func (h *ConnectionHandler) TestConnection(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"isConnected": false,
-			"error":      err.Error(),
+			"error":       err.Error(),
 		})
 		return
 	}
@@ -45,7 +46,7 @@ func (h *ConnectionHandler) TestConnection(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Request) {
-	var config database.ConnectionConfig
+	var config ConnectionConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -64,8 +65,18 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 	defer h.connManager.Disconnect(config.ID)
 
 	// Get user ID from context
-	userClaims := r.Context().Value("user").(map[string]interface{})
-	userID := int(userClaims["user_id"].(float64))
+	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "invalid user claims", http.StatusBadRequest)
+		return
+	}
+
+	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Save to database
 	storedConn := StoredConnection{
@@ -77,9 +88,9 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		Username:     config.Username,
 		Password:     config.Password,
 		DatabaseName: config.Database,
-		SSL:         config.SSL,
-		UserID:      userID,
-		Status:      "active",
+		SSL:          config.SSL,
+		UserID:       userID,
+		Status:       "active",
 	}
 
 	if err := h.connStorage.SaveConnection(storedConn); err != nil {
@@ -92,8 +103,18 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ConnectionHandler) ListConnections(w http.ResponseWriter, r *http.Request) {
-	userClaims := r.Context().Value("user").(map[string]interface{})
-	userID := int(userClaims["user_id"].(float64))
+	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "invalid user claims", http.StatusBadRequest)
+		return
+	}
+
+	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	connections, err := h.connStorage.ListConnections(userID)
 	if err != nil {

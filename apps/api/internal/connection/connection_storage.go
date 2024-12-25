@@ -2,31 +2,14 @@ package connection
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/dendianugerah/velld/internal/common"
+	"github.com/google/uuid"
 )
 
 type ConnectionStorage struct {
 	db     *sql.DB
 	crypto *common.EncryptionService
-}
-
-type StoredConnection struct {
-	ID              string     `json:"id"`
-	Name            string     `json:"name"`
-	Type            string     `json:"type"`
-	Host            string     `json:"host"`
-	Port            int        `json:"port"`
-	Username        string     `json:"username"`
-	Password        string     `json:"password"`
-	DatabaseName    string     `json:"database_name"`
-	SSL             bool       `json:"ssl"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
-	LastConnectedAt *time.Time `json:"last_connected_at"`
-	UserID          int        `json:"user_id"`
-	Status          string     `json:"status"`
 }
 
 func NewConnectionStorage(db *sql.DB, crypto *common.EncryptionService) *ConnectionStorage {
@@ -113,7 +96,7 @@ func (s *ConnectionStorage) GetConnection(id string) (*StoredConnection, error) 
 	return &conn, nil
 }
 
-func (s *ConnectionStorage) ListConnections(userID int) ([]StoredConnection, error) {
+func (s *ConnectionStorage) ListConnections(userID uuid.UUID) ([]StoredConnection, error) {
 	query := `SELECT * FROM connections WHERE user_id = $1`
 	rows, err := s.db.Query(query, userID)
 	if err != nil {

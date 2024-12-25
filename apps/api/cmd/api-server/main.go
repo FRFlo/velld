@@ -9,7 +9,6 @@ import (
 
 	"github.com/dendianugerah/velld/internal/auth"
 	"github.com/dendianugerah/velld/internal/common"
-	"github.com/dendianugerah/velld/internal/database"
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/dendianugerah/velld/internal/middleware"
 	_ "github.com/lib/pq"
@@ -44,7 +43,7 @@ func main() {
 		log.Println("Migrations applied successfully")
 	}
 
-	connManager := database.NewConnectionManager()
+	connManager := connection.NewConnectionManager()
 
 	// Initialize repositories
 	authRepo := auth.NewAuthRepository(db)

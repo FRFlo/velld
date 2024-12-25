@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"io"
 )
@@ -13,8 +14,17 @@ type EncryptionService struct {
 	key []byte
 }
 
-func NewEncryptionService(key string) (*EncryptionService, error) {
-	return &EncryptionService{key: []byte(key)}, nil
+func NewEncryptionService(hexKey string) (*EncryptionService, error) {
+	key, err := hex.DecodeString(hexKey)
+	if err != nil {
+		return nil, errors.New("invalid hex-encoded key")
+	}
+
+	if len(key) != 32 {
+		return nil, errors.New("invalid encryption key size: must be 32 bytes")
+	}
+
+	return &EncryptionService{key: key}, nil
 }
 
 func (s *EncryptionService) Encrypt(plaintext string) (string, error) {
