@@ -1,5 +1,6 @@
 'use client';
 
+import { formatSize } from '@/lib/helper';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,7 +69,7 @@ export function ConnectionsList() {
                           {connection.status}
                         </Badge>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {connection.lastSync}
+                          {connection.last_connected_at}
                         </p>
                       </div>
                       <div className="flex space-x-2">
@@ -84,7 +85,7 @@ export function ConnectionsList() {
                   <div className="mt-4 flex items-center text-sm text-muted-foreground">
                     <div className="flex items-center">
                       <Server className="h-4 w-4 mr-1" />
-                      Total Size: {connection.size}
+                      Total Size: {formatSize(connection.database_size)}
                     </div>
                   </div>
                 </div>

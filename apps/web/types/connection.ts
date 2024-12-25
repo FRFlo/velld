@@ -4,10 +4,13 @@ export interface DatabaseConnection {
   type: 'mysql' | 'postgresql' | 'mongodb';
   host: string;
   port: number;
+  status: 'connected' | 'disconnected';
   username: string;
   password: string;
   database: string;
   ssl: boolean;
+  last_connected_at: string;
+  database_size: number;
 }
 
 export interface ConnectionStatus {
