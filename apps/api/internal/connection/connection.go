@@ -52,12 +52,10 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Generate UUID if ID is not provided
 	if config.ID == "" {
 		config.ID = uuid.New().String()
 	}
 
-	// Test the connection first
 	if err := h.connManager.Connect(config); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -69,7 +67,6 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		fmt.Printf("Failed to get database size: %v\n", err)
 	}
 
-	// Get user ID from context
 	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "invalid user claims", http.StatusBadRequest)
@@ -83,7 +80,6 @@ func (h *ConnectionHandler) SaveConnection(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Save to database
 	storedConn := StoredConnection{
 		ID:           config.ID,
 		Name:         config.Name,
@@ -129,4 +125,28 @@ func (h *ConnectionHandler) ListConnections(w http.ResponseWriter, r *http.Reque
 	}
 
 	json.NewEncoder(w).Encode(connections)
+}
+
+func (h *ConnectionHandler) GetConnectionStats(w http.ResponseWriter, r *http.Request) {
+    userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
+    if !ok {
+        http.Error(w, "invalid user claims", http.StatusBadRequest)
+        return
+    }
+
+    userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
+    userID, err := uuid.Parse(userIDStr)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    stats, err := h.connStorage.GetConnectionStats(userID)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(stats)
 }

@@ -35,3 +35,13 @@ type ConnectionConfig struct {
 	Database string `json:"database"`
 	SSL      bool   `json:"ssl"`
 }
+
+type ConnectionStats struct {
+	TotalConnections int     `json:"total_connections"`
+	TotalSize        int64   `json:"total_size"`
+	AverageSize      float64 `json:"average_size"`
+	ActiveCount      int     `json:"active_count"`
+	InactiveCount    int     `json:"inactive_count"`
+	SSLCount         int64   `json:"ssl_count"`
+	SSLPercentage    float64 `json:"ssl_percentage"`
+}
