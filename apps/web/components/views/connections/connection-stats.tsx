@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Activity, Database, Server, Shield } from "lucide-react";
 import { useConnections } from "@/hooks/use-connections";
 import { formatSize } from "@/lib/helper";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function ConnectionStats() {
-  const { stats } = useConnections();
+  const { stats, isLoading } = useConnections();
 
   const statsData = [
     {
@@ -54,7 +55,11 @@ export function ConnectionStats() {
                 <p className="text-sm font-medium text-muted-foreground">
                   {stat.name}
                 </p>
-                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-20 mt-1" />
+                ) : (
+                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   {stat.description}
                 </p>
