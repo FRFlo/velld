@@ -31,7 +31,7 @@ export function AddConnectionDialog() {
             Add a new database connection. The connection will be tested before saving.
           </DialogDescription>
         </DialogHeader>
-        <ConnectionForm onSuccess={() => setOpen(false)} />
+        <ConnectionForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
