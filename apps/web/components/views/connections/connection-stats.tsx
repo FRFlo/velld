@@ -1,41 +1,45 @@
 import { Card } from "@/components/ui/card";
-import { Database, Server, Shield, Activity } from "lucide-react";
-
-const stats = [
-  {
-    name: "Active Sources",
-    value: "7",
-    icon: Database,
-    description: "Connected databases",
-    color: "text-blue-500",
-  },
-  {
-    name: "Total Size",
-    value: "1.2TB",
-    icon: Server,
-    description: "Across all databases",
-    color: "text-emerald-500",
-  },
-  {
-    name: "Secure Connections",
-    value: "100%",
-    icon: Shield,
-    description: "SSL/TLS enabled",
-    color: "text-purple-500",
-  },
-  {
-    name: "Average Load",
-    value: "0.8ms",
-    icon: Activity,
-    description: "Response time",
-    color: "text-amber-500",
-  },
-];
+import { Activity, Database, Server, Shield } from "lucide-react";
+import { useConnections } from "@/hooks/use-connections";
+import { formatSize } from "@/lib/helper";
 
 export function ConnectionStats() {
+  const { stats } = useConnections();
+
+  const statsData = [
+    {
+      name: "Total Connections",
+      value: stats?.total_connections ?? 0,
+      icon: Database,
+      description: "Connected databases",
+      color: "text-blue-500",
+    },
+    {
+      name: "Total Size",
+      value: `${formatSize(stats?.average_size ?? 0)}`,
+      icon: Server,
+      description: "Across all databases",
+      color: "text-emerald-500",
+    },
+    {
+      name: "SSL Connections",
+      value: stats?.ssl_percentage ?? 0,
+      icon: Shield,
+      description: "SSL/TLS enabled",
+      color: "text-purple-500",
+    },
+    {
+      name: "Average Load",
+      value: "0.5 ms",
+      icon: Activity,
+      description: "Response time",
+      color: "text-amber-500",
+    }
+  ];
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      {stats.map((stat) => {
+      {statsData.map((stat) => {
         const Icon = stat.icon;
         return (
           <Card

@@ -18,3 +18,9 @@ export interface ConnectionStatus {
   lastSync: string;
   error?: string;
 }
+
+export interface ConnectionStats {
+  total_connections: number;
+  average_size: number;
+  ssl_percentage: number;
+};

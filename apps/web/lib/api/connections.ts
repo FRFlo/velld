@@ -1,4 +1,4 @@
-import { DatabaseConnection, ConnectionStatus } from '@/types/connection';
+import { DatabaseConnection, ConnectionStatus, ConnectionStats } from '@/types/connection';
 import { apiRequest } from '@/lib/api-client';
 
 export async function testConnection(connection: DatabaseConnection): Promise<ConnectionStatus> {
@@ -17,4 +17,8 @@ export async function saveConnection(connection: DatabaseConnection): Promise<vo
 
 export async function getConnections(): Promise<DatabaseConnection[]> {
   return apiRequest<DatabaseConnection[]>('/api/connections');
+}
+
+export async function getConnectionStats(): Promise<ConnectionStats> {
+  return apiRequest<ConnectionStats>('/api/connections/stats');
 }

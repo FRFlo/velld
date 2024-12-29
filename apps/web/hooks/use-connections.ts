@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { saveConnection, testConnection, getConnections } from '@/lib/api/connections';
+import { saveConnection, testConnection, getConnections, getConnectionStats } from '@/lib/api/connections';
 import { DatabaseConnection } from '@/types/connection';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,10 +33,16 @@ export function useConnections() {
     },
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ['connection-stats'],
+    queryFn: getConnectionStats,
+  });
+
   return {
     connections,
     isLoading,
     addConnection,
     isAdding,
+    stats,
   };
 }
