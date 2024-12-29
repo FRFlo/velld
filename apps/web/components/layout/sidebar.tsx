@@ -1,6 +1,6 @@
 "use client";
 
-import { Layout, Server, Settings, History, Shield } from "lucide-react";
+import { Layout, Server, Settings, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -11,7 +11,7 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: Layout },
   { name: "Connections", href: "/connections", icon: Server },
   { name: "Backup History", href: "/history", icon: History },
-  { name: "Security", href: "/security", icon: Shield },
+  // { name: "Security", href: "/security", icon: Shield },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -31,7 +31,7 @@ export function Sidebar() {
               <Button
                 variant={pathname === item.href ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
+                  "w-full justify-start my-0.5",
                   pathname === item.href && "bg-secondary"
                 )}
               >
