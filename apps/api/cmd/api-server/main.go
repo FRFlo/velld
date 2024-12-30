@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/dendianugerah/velld/internal/auth"
+	"github.com/dendianugerah/velld/internal/backup"
 	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/dendianugerah/velld/internal/middleware"
@@ -45,10 +46,7 @@ func main() {
 
 	connManager := connection.NewConnectionManager()
 
-	// Initialize repositories
 	authRepo := auth.NewAuthRepository(db)
-
-	// Initialize services with repositories
 	authService := auth.NewAuthService(authRepo, jwtSecret)
 
 	cryptoService, err := common.NewEncryptionService(encryptionKey)
@@ -56,20 +54,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initialize storage with encryption
 	connStorage := connection.NewConnectionStorage(db, cryptoService)
 
-	// Initialize handlers
 	connHandler := connection.NewConnectionHandler(connManager, connStorage)
 	authHandler := auth.NewAuthHandler(authService)
 
-	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtSecret)
 
-	// Setup router
 	r := mux.NewRouter()
-
-	// CORS middleware
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -96,6 +88,20 @@ func main() {
 	protected.HandleFunc("/connections/test", connHandler.TestConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.SaveConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET", "OPTIONS")
+
+	// Configure backup tool paths from environment
+	toolPaths := map[string]string{
+		"postgresql": os.Getenv("POSTGRESQL_BIN_PATH"),
+		"mysql":      os.Getenv("MYSQL_BIN_PATH"),
+		"mariadb":    os.Getenv("MARIADB_BIN_PATH"),
+		"mongodb":    os.Getenv("MONGODB_BIN_PATH"),
+	}
+
+	backupService := backup.NewBackupService(connStorage, "./backups", toolPaths)
+	backupHandler := backup.NewBackupHandler(backupService)
+
+	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST", "OPTIONS")
 
 	// Start server
 	log.Println("Server starting on :8080")
