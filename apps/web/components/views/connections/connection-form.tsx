@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { BaseConnection } from '@/types/connection';
 import { useConnections } from "@/hooks/use-connections";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,7 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
           <SelectContent>
             <SelectItem value="postgresql">PostgreSQL</SelectItem>
             <SelectItem value="mysql">MySQL</SelectItem>
+            <SelectSeparator />
             <SelectItem value="mongodb">MongoDB</SelectItem>
         </SelectContent>
         </Select>
