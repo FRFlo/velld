@@ -21,7 +21,7 @@ export function AddConnectionDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Add Connection
+          New Connection
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">

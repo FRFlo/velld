@@ -98,10 +98,13 @@ func main() {
 		"mongodb":    os.Getenv("MONGODB_BIN_PATH"),
 	}
 
-	backupService := backup.NewBackupService(connStorage, "./backups", toolPaths)
+	backupRepo := backup.NewBackupRepository(db)
+	backupService := backup.NewBackupService(connStorage, "./backups", toolPaths, backupRepo)
 	backupHandler := backup.NewBackupHandler(backupService)
 
 	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET", "OPTIONS")
 
 	// Start server
 	log.Println("Server starting on :8080")

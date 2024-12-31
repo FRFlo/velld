@@ -16,9 +16,10 @@ type BackupService struct {
 	connStorage *connection.ConnectionStorage
 	backupDir   string
 	toolPaths   map[string]string
+	backupRepo  *BackupRepository
 }
 
-func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPaths map[string]string) *BackupService {
+func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPaths map[string]string, backupRepo *BackupRepository) *BackupService {
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		panic(err)
 	}
@@ -32,6 +33,7 @@ func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPa
 		connStorage: cs,
 		backupDir:   backupDir,
 		toolPaths:   toolPaths,
+		backupRepo:  backupRepo,
 	}
 }
 
@@ -79,12 +81,24 @@ func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
 		return nil, fmt.Errorf("failed to get backup file info: %v", err)
 	}
 
-	backup.BackupSize = fileInfo.Size()
+	backup.Size = fileInfo.Size()
 	backup.Status = "completed"
 	now := time.Now()
 	backup.CompletedTime = &now
 
+	if err := s.backupRepo.CreateBackup(backup); err != nil {
+		return nil, fmt.Errorf("failed to save backup: %v", err)
+	}
+
 	return backup, nil
+}
+
+func (s *BackupService) GetBackup(id string) (*Backup, error) {
+	return s.backupRepo.GetBackup(id)
+}
+
+func (s *BackupService) GetAllBackups(userID uuid.UUID) ([]*Backup, error) {
+	return s.backupRepo.GetAllBackups(userID)
 }
 
 func (s *BackupService) verifyBackupTools(dbType string) error {

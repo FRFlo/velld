@@ -9,7 +9,7 @@ export function ConnectionStats() {
 
   const statsData = [
     {
-      name: "Total Connections",
+      name: "Active Sources",
       value: stats?.total_connections ?? 0,
       icon: Database,
       description: "Connected databases",
@@ -23,7 +23,7 @@ export function ConnectionStats() {
       color: "text-emerald-500",
     },
     {
-      name: "SSL Connections",
+      name: "Secure Connections",
       value: `${stats?.ssl_percentage ?? 0}%`,
       icon: Shield,
       description: "SSL/TLS enabled",
