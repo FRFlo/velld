@@ -24,7 +24,7 @@ export function ConnectionStats() {
     },
     {
       name: "SSL Connections",
-      value: stats?.ssl_percentage ?? 0,
+      value: `${stats?.ssl_percentage ?? 0}%`,
       icon: Shield,
       description: "SSL/TLS enabled",
       color: "text-purple-500",
