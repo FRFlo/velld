@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveConnection, testConnection, getConnections, getConnectionStats } from '@/lib/api/connections';
-import { DatabaseConnection } from '@/types/connection';
+import { BaseConnection } from '@/types/connection';
 import { useToast } from '@/hooks/use-toast';
 
 export function useConnections() {
@@ -13,12 +13,17 @@ export function useConnections() {
   });
 
   const { mutate: addConnection, isPending: isAdding } = useMutation({
-    mutationFn: async (connection: DatabaseConnection) => {
+    mutationFn: async (connection: BaseConnection) => {
       await testConnection(connection);
       await saveConnection(connection);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['connections'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['connections']
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['connection-stats']
+      });
       toast({
         title: "Success",
         description: "Connection added successfully",

@@ -1,14 +1,17 @@
-export interface DatabaseConnection {
-  id: string;
+export interface BaseConnection {
   name: string;
   type: 'mysql' | 'postgresql' | 'mongodb';
   host: string;
   port: number;
-  status: 'connected' | 'disconnected';
   username: string;
   password: string;
   database: string;
   ssl: boolean;
+}
+
+export interface Connection extends BaseConnection {
+  id: string;
+  status: 'connected' | 'disconnected';
   last_connected_at: string;
   database_size: number;
 }

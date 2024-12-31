@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DatabaseConnection } from '@/types/connection';
+import { BaseConnection } from '@/types/connection';
 import { useConnections } from "@/hooks/use-connections";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,9 @@ interface ConnectionFormProps {
 }
 
 export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
-  const [formData, setFormData] = useState<DatabaseConnection>({
+  const [formData, setFormData] = useState<BaseConnection>({
     name: "",
-    type: "",
+    type: "" as BaseConnection['type'],
     host: "",
     port: 0,
     username: "",
@@ -50,7 +50,7 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
         <Label htmlFor="type">Database Type</Label>
         <Select
           value={formData.type}
-          onValueChange={(value) => setFormData({ ...formData, type: value as DatabaseConnection['type'] })}
+          onValueChange={(value) => setFormData({ ...formData, type: value as BaseConnection['type'] })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select a database" />
