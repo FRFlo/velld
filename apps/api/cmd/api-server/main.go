@@ -88,6 +88,7 @@ func main() {
 	protected.HandleFunc("/connections/test", connHandler.TestConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.SaveConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT", "OPTIONS")
 	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET", "OPTIONS")
 
 	// Configure backup tool paths from environment

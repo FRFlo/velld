@@ -98,6 +98,42 @@ func (s *ConnectionStorage) GetConnection(id string) (*StoredConnection, error) 
 	return &conn, nil
 }
 
+func (s *ConnectionStorage) UpdateConnection(conn StoredConnection) error {
+	// Encrypt sensitive data
+	username, err := s.crypto.Encrypt(conn.Username)
+	if err != nil {
+		return err
+	}
+
+	password, err := s.crypto.Encrypt(conn.Password)
+	if err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE connections SET 
+			name = $1, type = $2, host = $3, port = $4, 
+			username = $5, password = $6, database_name = $7, 
+			ssl = $8, database_size = $9, updated_at = NOW()
+		WHERE id = $10`
+
+	_, err = s.db.Exec(
+		query,
+		conn.Name,
+		conn.Type,
+		conn.Host,
+		conn.Port,
+		username, // encrypted
+		password, // encrypted
+		conn.DatabaseName,
+		conn.SSL,
+		conn.DatabaseSize,
+		conn.ID,
+	)
+
+	return err
+}
+
 func (s *ConnectionStorage) ListConnections(userID uuid.UUID) ([]StoredConnection, error) {
 	query := `SELECT * FROM connections WHERE user_id = $1`
 	rows, err := s.db.Query(query, userID)
