@@ -6,7 +6,7 @@ import { ProfileSettings } from "@/components/views/settings/profile-settings";
 
 export default function SettingsPage() {
   return (
-    <div className="flex h-screen bg-background/50 backdrop-blur-xl">
+    <div className="flex-none sm:flex h-screen bg-background/50 backdrop-blur-xl">
       <Sidebar />
       <SettingsLayout>
         <ProfileSettings />

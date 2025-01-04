@@ -1,11 +1,12 @@
 "use client";
 
-import { Layout, Server, Settings, History } from "lucide-react";
+import { Layout, Server, Settings, History, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Logo from "../ui/logo";
+import { useState } from "react";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Layout },
@@ -17,17 +18,26 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  return (
-    <div className="w-64 border-r bg-card/50 backdrop-blur-xl p-6 space-y-6">
-      <div className="flex items-center space-x-2">
-        <Logo/>
+  const sidebarContent = (
+    <>
+      <div className="flex justify-between">
+        <Logo />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <X className="h-6 w-6" />
+        </Button>
       </div>
       <nav className="space-y-1">
         {navigation.map((item) => {
           const Icon = item.icon;
           return (
-            <Link key={item.name} href={item.href}>
+            <Link key={item.name} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 variant={pathname === item.href ? "secondary" : "ghost"}
                 className={cn(
@@ -42,6 +52,36 @@ export function Sidebar() {
           );
         })}
       </nav>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 lg:hidden z-50"
+        onClick={() => setIsMobileMenuOpen(true)}
+      >
+        <Menu className="h-6 w-6" />
+      </Button>
+
+      <div
+        className={cn(
+          "fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden",
+          isMobileMenuOpen ? "block" : "hidden"
+        )}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 w-64 border-r bg-card/50 backdrop-blur-xl p-6 space-y-6 z-50 transition-transform duration-300 lg:translate-x-0 lg:static",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </div>
+    </>
   );
 }

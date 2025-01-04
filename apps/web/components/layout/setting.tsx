@@ -6,7 +6,7 @@ interface SettingsLayoutProps {
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
-    <div className="flex-1 overflow-hidden relative">
+    <div className="flex-1 relative">
       <div className="h-full px-8 py-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold tracking-tight">Settings</h2>

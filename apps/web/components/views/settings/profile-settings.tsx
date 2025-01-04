@@ -50,8 +50,8 @@ export function ProfileSettings() {
       <Card className="p-6">
         <h3 className="text-lg font-medium mb-4">Security</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-muted/40 rounded-lg">
-            <div className="flex items-center space-x-4">
+          <div className="flex-none sm:flex items-center justify-between p-4 bg-muted/40 rounded-lg">
+            <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <div className="p-2 rounded-full bg-background">
                 <Shield className="w-5 h-5 text-muted-foreground" />
               </div>
