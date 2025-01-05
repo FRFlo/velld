@@ -17,16 +17,16 @@ export function ConnectionStats() {
     },
     {
       name: "Total Size",
-      value: `${formatSize(stats?.average_size ?? 0)}`,
+      value: `${formatSize(stats?.total_size ?? 0)}`,
       icon: Server,
       description: "Across all databases",
       color: "text-emerald-500",
     },
     {
-      name: "Secure Connections",
-      value: `${stats?.ssl_percentage ?? 0}%`,
+      name: "Average Size",
+      value: `${formatSize(stats?.average_size ?? 0)}`,
       icon: Shield,
-      description: "SSL/TLS enabled",
+      description: "Per database",
       color: "text-purple-500",
     },
     {

@@ -24,6 +24,7 @@ export interface ConnectionStatus {
 
 export interface ConnectionStats {
   total_connections: number;
+  total_size: number;
   average_size: number;
   ssl_percentage: number;
 };

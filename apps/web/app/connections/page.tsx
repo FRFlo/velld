@@ -9,7 +9,7 @@ export default function ConnectionsPage() {
   return (
     <div className="flex h-screen bg-background/50 backdrop-blur-xl">
       <Sidebar />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1">
         <div className="h-full px-8 py-6">
           <div className="flex justify-between items-center mb-8">
             <div>
