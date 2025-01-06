@@ -197,3 +197,15 @@ func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, ou
 	cmd := exec.Command(mongoDumpPath, args...)
 	return cmd
 }
+
+func (s *BackupService) ScheduleBackup(backup *Backup) error {
+
+	// TODO: Implement cron scheduling logic here
+	// This would typically involve:
+	// 1. Validating the cron expression
+	// 2. Creating a cron job
+	// 3. Storing the schedule in the database
+	// 4. Calculating and setting the NextRunTime
+
+	return nil
+}
