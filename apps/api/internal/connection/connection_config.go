@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/mattn/go-sqlite3"
 )
 
 type ConnectionManager struct {
@@ -137,6 +138,8 @@ func (cm *ConnectionManager) getSQLDatabaseSize(db *sql.DB) (int64, error) {
 		query = `SELECT SUM(data_length + index_length) 
 				 FROM information_schema.tables 
 				 WHERE table_schema = DATABASE()`
+	case *sqlite3.SQLiteDriver:
+		query = "SELECT page_count * page_size as size FROM pragma_page_count, pragma_page_size"
 	default:
 		return 0, fmt.Errorf("unsupported database type for size calculation")
 	}

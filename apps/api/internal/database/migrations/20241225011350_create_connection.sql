@@ -2,21 +2,21 @@
 -- +goose StatementBegin
 SELECT 'up SQL query';
 CREATE TABLE connections (
-    id VARCHAR(255) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    host VARCHAR(255) NOT NULL,
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    host TEXT NOT NULL,
     port INTEGER NOT NULL,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    database_name VARCHAR(255) NOT NULL,
-    ssl BOOLEAN DEFAULT false,
-    database_size BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_connected_at TIMESTAMP,
-    user_id UUID REFERENCES users(id),
-    status VARCHAR(50) DEFAULT 'connected'
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    database_name TEXT NOT NULL,
+    ssl INTEGER DEFAULT 0,
+    database_size INTEGER,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    last_connected_at TEXT,
+    user_id TEXT REFERENCES users(id),
+    status TEXT DEFAULT 'connected'
 );
 
 CREATE INDEX idx_connections_user_id ON connections(user_id);

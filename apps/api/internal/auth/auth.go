@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/dendianugerah/velld/internal/common/response"
 )
 
 type AuthHandler struct {
@@ -17,40 +18,40 @@ func NewAuthHandler(authService *AuthService) *AuthHandler {
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.SendError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	if err := h.authService.Register(req.Username, req.Password); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.SendError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	response.SendSuccess(w, "Registration successful", ProfileResponse{Username: req.Username})
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.SendError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	token, err := h.authService.Login(req.Username, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		response.SendError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	json.NewEncoder(w).Encode(LoginResponse{Token: token})
+	response.SendSuccess(w, "Login successful", LoginResponse{Token: token})
 }
 
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	username, err := h.authService.GetProfile(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		response.SendError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	json.NewEncoder(w).Encode(ProfileResponse{Username: username})
+	response.SendSuccess(w, "Profile retrieved successfully", ProfileResponse{Username: username})
 }

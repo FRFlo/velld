@@ -1,26 +1,22 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/dendianugerah/velld/internal/auth"
 	"github.com/dendianugerah/velld/internal/backup"
 	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/connection"
+	"github.com/dendianugerah/velld/internal/database"
 	"github.com/dendianugerah/velld/internal/middleware"
-	_ "github.com/lib/pq"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"github.com/pressly/goose"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-const (
-	migrationsDir = "./internal/database/migrations"
-)
 
 func main() {
 	err := godotenv.Load()
@@ -28,21 +24,19 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	databaseURL := os.Getenv("DATABASE_URL")
 	jwtSecret := os.Getenv("JWT_SECRET")
 	encryptionKey := os.Getenv("ENCRYPTION_KEY")
 
-	db, err := sql.Open("postgres", databaseURL)
+	if jwtSecret == "" || encryptionKey == "" {
+		log.Fatal("JWT_SECRET and ENCRYPTION_KEY must be set in .env file")
+	}
+
+	dbPath := filepath.Join("internal", "database", "velld.db")
+	db, err := database.Init(dbPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
-
-	if err := runMigrations(db); err != nil {
-		log.Fatal("Failed to run migrations:", err)
-	} else {
-		log.Println("Migrations applied successfully")
-	}
 
 	connManager := connection.NewConnectionManager()
 
@@ -112,11 +106,4 @@ func main() {
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func runMigrations(db *sql.DB) error {
-	if err := goose.Up(db, migrationsDir); err != nil {
-		return fmt.Errorf("migration failed: %v", err)
-	}
-	return nil
 }

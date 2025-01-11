@@ -30,7 +30,7 @@ export function ProfileSettings() {
               {isLoadingProfile ? (
                 <Skeleton className="h-8 w-32" />
               ) : (
-                <p className="font-medium">{profile?.username}</p>
+                <p className="font-medium">{profile?.data.username}</p>
               )}
             </div>
           </div>

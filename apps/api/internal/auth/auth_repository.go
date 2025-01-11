@@ -15,8 +15,8 @@ func NewAuthRepository(db *sql.DB) *AuthRepository {
 	}
 }
 
-func (r *AuthRepository) CreateUser(username string, hashedPassword string) error {
-	_, err := r.db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", username, hashedPassword)
+func (r *AuthRepository) CreateUser(data User) error {
+	_, err := r.db.Exec("INSERT INTO users (id, username, password, created_at) VALUES ($1, $2, $3, $4)", data.ID, data.Username, data.Password, data.CreatedAt)
 	return err
 }
 

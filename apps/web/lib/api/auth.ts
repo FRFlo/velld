@@ -2,12 +2,12 @@ import { Auth, AuthResponse, Profile } from "@/types/auth";
 import { apiRequest } from "@/lib/api-client";
 
 export async function login(auth: Auth): Promise<AuthResponse> {
-  const data = await apiRequest<AuthResponse>('/api/auth/login', {
+  const response = await apiRequest<AuthResponse>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(auth),
   });
-  localStorage.setItem('token', data.token);
-  return data;
+  localStorage.setItem('token', response.data.token);
+  return response;
 }
 
 export async function register(auth: Auth): Promise<void> {

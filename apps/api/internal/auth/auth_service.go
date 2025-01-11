@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,7 +28,14 @@ func (s *AuthService) Register(username, password string) error {
 		return err
 	}
 
-	return s.repo.CreateUser(username, string(hashedPassword))
+	payload := User{
+		ID:        uuid.New(),
+		Username:  username,
+		Password:  string(hashedPassword),
+		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	return s.repo.CreateUser(payload)
 }
 
 func (s *AuthService) Login(username, password string) (string, error) {
