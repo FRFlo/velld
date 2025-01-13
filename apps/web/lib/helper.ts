@@ -21,3 +21,12 @@ export function formatSize(bytes: number): string {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
+export function calculateDuration(start: string, end: string) {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  const durationMs = endTime.getTime() - startTime.getTime();
+  const minutes = Math.floor(durationMs / 60000);
+  const seconds = Math.floor((durationMs % 60000) / 1000);
+  return `${minutes}m ${seconds}s`;
+}

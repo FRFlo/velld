@@ -1,9 +1,15 @@
-import { saveBackup } from "@/lib/api/backups";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBackups, saveBackup } from "@/lib/api/backups";
+import { useToast } from "@/hooks/use-toast";
 
 export function useBackup() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: backups, isLoading } = useQuery({
+    queryKey: ["backups"],
+    queryFn: getBackups,
+  })
 
   const { mutate: addBackup, isPending: isAdding } = useMutation({
     mutationFn: async (connectionId: string) => {
@@ -30,5 +36,7 @@ export function useBackup() {
   return {
     addBackup,
     isAdding,
+    backups,
+    isLoading,
   }
 }
