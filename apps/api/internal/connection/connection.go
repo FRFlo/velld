@@ -128,27 +128,27 @@ func (h *ConnectionHandler) ListConnections(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *ConnectionHandler) GetConnectionStats(w http.ResponseWriter, r *http.Request) {
-    userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
-    if !ok {
-        http.Error(w, "invalid user claims", http.StatusBadRequest)
-        return
-    }
+	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "invalid user claims", http.StatusBadRequest)
+		return
+	}
 
-    userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
-    userID, err := uuid.Parse(userIDStr)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    stats, err := h.connStorage.GetConnectionStats(userID)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	stats, err := h.connStorage.GetConnectionStats(userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(stats)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }
 
 func (h *ConnectionHandler) UpdateConnection(w http.ResponseWriter, r *http.Request) {

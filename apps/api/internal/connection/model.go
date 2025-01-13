@@ -16,8 +16,8 @@ type StoredConnection struct {
 	Password        string     `json:"password"`
 	DatabaseName    string     `json:"database_name"`
 	SSL             bool       `json:"ssl"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
+	CreatedAt       string		 `json:"created_at"`
+	UpdatedAt       string		 `json:"updated_at"`
 	LastConnectedAt *time.Time `json:"last_connected_at"`
 	UserID          uuid.UUID  `json:"user_id"`
 	Status          string     `json:"status"`
