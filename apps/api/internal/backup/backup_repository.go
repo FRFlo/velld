@@ -17,16 +17,16 @@ func NewBackupRepository(db *sql.DB) *BackupRepository {
 }
 
 func (r *BackupRepository) CreateBackup(backup *Backup) error {
-	_, err := r.db.Exec("INSERT INTO backups (id, connection_id, status, path, size, scheduled_time, completed_time, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-		backup.ID, backup.ConnectionID, backup.Status, backup.Path, backup.Size, backup.ScheduledTime, backup.CompletedTime, backup.CreatedAt, backup.UpdatedAt)
+	_, err := r.db.Exec("INSERT INTO backups (id, connection_id, status, path, size, scheduled_time, started_time, completed_time, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+		backup.ID, backup.ConnectionID, backup.Status, backup.Path, backup.Size, backup.ScheduledTime, backup.StartedTime, backup.CompletedTime, backup.CreatedAt, backup.UpdatedAt)
 	return err
 }
 
-func (r *BackupRepository) GetAllBackups(UserID uuid.UUID) ([]*Backup, error) {
+func (r *BackupRepository) GetAllBackups(UserID uuid.UUID) ([]*BackupList, error) {
 	query := `
 			SELECT 
-					b.id, b.connection_id, b.status, b.path, b.size, 
-					b.scheduled_time, b.completed_time, b.created_at, b.updated_at
+					b.id, b.connection_id, c.type, b.status, b.path, b.size, 
+					b.scheduled_time, b.started_time, b.completed_time, b.created_at, b.updated_at
 			FROM 
 					backups b
 			INNER JOIN 
@@ -37,31 +37,30 @@ func (r *BackupRepository) GetAllBackups(UserID uuid.UUID) ([]*Backup, error) {
 
 	rows, err := r.db.Query(query, UserID)
 	if err != nil {
-			return nil, err
+		return nil, err
 	}
 	defer rows.Close()
 
-	backups := make([]*Backup, 0)
+	backups := make([]*BackupList, 0)
 	for rows.Next() {
-			backup := &Backup{}
-			err := rows.Scan(
-					&backup.ID, &backup.ConnectionID, &backup.Status, &backup.Path,
-					&backup.Size, &backup.ScheduledTime, &backup.CompletedTime,
-					&backup.CreatedAt, &backup.UpdatedAt,
-			)
-			if err != nil {
-					return nil, err
-			}
-			backups = append(backups, backup)
+		backup := &BackupList{}
+		err := rows.Scan(
+			&backup.ID, &backup.ConnectionID, &backup.DatabaseType, &backup.Status, &backup.Path,
+			&backup.Size, &backup.ScheduledTime, &backup.StartedTime, &backup.CompletedTime,
+			&backup.CreatedAt, &backup.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		backups = append(backups, backup)
 	}
 
 	if err = rows.Err(); err != nil {
-			return nil, err
+		return nil, err
 	}
 
 	return backups, nil
 }
-
 
 func (r *BackupRepository) GetBackup(id string) (*Backup, error) {
 	backup := &Backup{}

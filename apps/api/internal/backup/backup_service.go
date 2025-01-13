@@ -55,8 +55,11 @@ func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
 	backup := &Backup{
 		ID:           backupID,
 		ConnectionID: connectionID,
+		StartedTime:  time.Now(),
 		Status:       "in_progress",
 		Path:         backupPath,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	var cmd *exec.Cmd
@@ -97,7 +100,7 @@ func (s *BackupService) GetBackup(id string) (*Backup, error) {
 	return s.backupRepo.GetBackup(id)
 }
 
-func (s *BackupService) GetAllBackups(userID uuid.UUID) ([]*Backup, error) {
+func (s *BackupService) GetAllBackups(userID uuid.UUID) ([]*BackupList, error) {
 	return s.backupRepo.GetAllBackups(userID)
 }
 

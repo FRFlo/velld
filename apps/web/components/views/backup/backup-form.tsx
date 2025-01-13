@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { saveBackup } from '@/lib/api/backups';
 
 interface BackupFormProps {
   onSuccess?: () => void;
@@ -40,7 +41,7 @@ export function BackupForm({ onSuccess, onCancel }: BackupFormProps) {
     setIsSubmitting(true);
     // TODO: Implement backup creation logic
     try {
-      // await createBackup(formData);
+      await saveBackup(formData.connectionId);
       onSuccess?.();
     } catch (error) {
       console.error('Failed to create backup:', error);

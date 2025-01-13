@@ -13,10 +13,24 @@ type Backup struct {
 	Status        string     `json:"status"`
 	Path          string     `json:"path"`
 	ScheduledTime time.Time  `json:"scheduled_time"`
-	StartedAt     time.Time  `json:"started_at"`
+	StartedTime   time.Time  `json:"started_time"`
 	CompletedTime *time.Time `json:"completed_time"`
 	CreatedAt     time.Time  `json:"created_at"`
 	UpdatedAt     time.Time  `json:"updated_at"`
+}
+
+type BackupList struct {
+	ID            uuid.UUID `json:"id"`
+	ConnectionID  string    `json:"connection_id"`
+	DatabaseType  string    `json:"database_type"`
+	Size          int64     `json:"size"`
+	Status        string    `json:"status"`
+	Path          string    `json:"path"`
+	ScheduledTime string    `json:"scheduled_time"`
+	StartedTime   string    `json:"started_time"`
+	CompletedTime string    `json:"completed_time"`
+	CreatedAt     string    `json:"created_at"`
+	UpdatedAt     string    `json:"updated_at"`
 }
 
 type BackupRequest struct {
