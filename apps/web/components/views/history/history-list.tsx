@@ -9,7 +9,7 @@ import { formatDistanceToNow, parseISO } from "date-fns";
 import { useBackup } from "@/hooks/use-backup";
 import { BackupList } from "@/types/backup";
 import { HistoryListSkeleton } from "@/components/ui/skeleton/history-list";
-import { calculateDuration } from "@/lib/helper";
+import { calculateDuration, formatSize } from "@/lib/helper";
 
 const statusColors = {
   completed: "bg-emerald-500/15 text-emerald-500",
@@ -54,7 +54,7 @@ export function HistoryList() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {formatDistanceToNow(parseISO(item.created_at), { addSuffix: true })}
+                        {formatDistanceToNow(parseISO(item.created_at), { addSuffix: true })} | {formatSize(item.size)}
                       </p>
                     </div>
                   </div>
