@@ -1,6 +1,8 @@
-export interface BackupList {
+import { Base } from './base';
+
+export interface Backup {
   id: string;
-  connetion_id: string;
+  connection_id: string;
   database_type: string;
   size: number;
   status: string;
@@ -11,3 +13,7 @@ export interface BackupList {
   created_at: string;
   updated_at: string;
 }
+
+export type BackupList = Backup;
+
+export type BackupListResponse = Base<BackupList[]>;
