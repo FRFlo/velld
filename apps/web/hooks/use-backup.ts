@@ -15,7 +15,6 @@ export function useBackup() {
     queryKey: ['backups', { page, limit, search }],
     queryFn: () => getBackups({ page, limit, search }),
     placeholderData: (previousData) => previousData,
-    staleTime: 5000,
   });
 
   const { mutate: addBackup, isPending: isAdding } = useMutation({
