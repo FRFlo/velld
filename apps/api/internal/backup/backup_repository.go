@@ -3,6 +3,7 @@ package backup
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -86,8 +87,8 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 	argCount := 2
 
 	if opts.Search != "" {
-		whereClause += fmt.Sprintf(" AND (c.name ILIKE $%d OR b.status ILIKE $%d)", argCount, argCount)
-		args = append(args, "%"+opts.Search+"%")
+		whereClause += fmt.Sprintf(" AND (LOWER(c.name) LIKE $%d OR LOWER(b.status) LIKE $%d)", argCount, argCount)
+		args = append(args, "%"+strings.ToLower(opts.Search)+"%")
 		argCount++
 	}
 
@@ -97,7 +98,7 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 		FROM backups b
 		INNER JOIN connections c ON b.connection_id = c.id
 		%s`, whereClause)
-	
+
 	var total int
 	if err := r.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
