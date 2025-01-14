@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/dendianugerah/velld/internal/common/response"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -24,18 +26,17 @@ func NewBackupHandler(bs *BackupService) *BackupHandler {
 func (h *BackupHandler) CreateBackup(w http.ResponseWriter, r *http.Request) {
 	var req BackupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	backup, err := h.backupService.CreateBackup(req.ConnectionID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.SendError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(backup)
+	response.SendSuccess(w, "Backup created successfully", backup)
 }
 
 func (h *BackupHandler) GetBackup(w http.ResponseWriter, r *http.Request) {
@@ -45,37 +46,58 @@ func (h *BackupHandler) GetBackup(w http.ResponseWriter, r *http.Request) {
 	backup, err := h.backupService.GetBackup(backupID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			http.Error(w, "Backup not found", http.StatusNotFound)
+			response.SendError(w, http.StatusNotFound, "Backup not found")
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.SendError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(backup)
+	response.SendSuccess(w, "Backup retrieved successfully", backup)
 }
 
 func (h *BackupHandler) ListBackups(w http.ResponseWriter, r *http.Request) {
 	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "invalid user claims", http.StatusBadRequest)
+		response.SendError(w, http.StatusBadRequest, "Invalid user claims")
 		return
 	}
 
 	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	backups, err := h.backupService.GetAllBackups(userID)
+	page := 1
+	limit := 10
+	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	search := r.URL.Query().Get("search")
+	offset := (page - 1) * limit
+
+	opts := BackupListOptions{
+		UserID: userID,
+		Limit:  limit,
+		Offset: offset,
+		Search: search,
+	}
+
+	backups, total, err := h.backupService.GetAllBackupsWithPagination(opts)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		response.SendError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(backups)
+	response.SendPaginatedSuccess(w, "Backups retrieved successfully", backups, page, limit, total)
 }

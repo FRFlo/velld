@@ -2,6 +2,7 @@ package backup
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -70,4 +71,70 @@ func (r *BackupRepository) GetBackup(id string) (*Backup, error) {
 		return nil, err
 	}
 	return backup, nil
+}
+
+type BackupListOptions struct {
+	UserID uuid.UUID
+	Limit  int
+	Offset int
+	Search string
+}
+
+func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) ([]*BackupList, int, error) {
+	whereClause := "WHERE c.user_id = $1"
+	args := []interface{}{opts.UserID}
+	argCount := 2
+
+	if opts.Search != "" {
+		whereClause += fmt.Sprintf(" AND (c.name ILIKE $%d OR b.status ILIKE $%d)", argCount, argCount)
+		args = append(args, "%"+opts.Search+"%")
+		argCount++
+	}
+
+	// Get total count
+	countQuery := fmt.Sprintf(`
+		SELECT COUNT(*) 
+		FROM backups b
+		INNER JOIN connections c ON b.connection_id = c.id
+		%s`, whereClause)
+	
+	var total int
+	if err := r.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	// Get paginated results
+	query := fmt.Sprintf(`
+		SELECT 
+			b.id, b.connection_id, c.type, b.status, b.path, b.size, 
+			b.scheduled_time, b.started_time, b.completed_time, b.created_at, b.updated_at
+		FROM backups b
+		INNER JOIN connections c ON b.connection_id = c.id
+		%s
+		ORDER BY b.created_at DESC
+		LIMIT $%d OFFSET $%d
+	`, whereClause, argCount, argCount+1)
+
+	args = append(args, opts.Limit, opts.Offset)
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	backups := make([]*BackupList, 0)
+	for rows.Next() {
+		backup := &BackupList{}
+		err := rows.Scan(
+			&backup.ID, &backup.ConnectionID, &backup.DatabaseType, &backup.Status, &backup.Path,
+			&backup.Size, &backup.ScheduledTime, &backup.StartedTime, &backup.CompletedTime,
+			&backup.CreatedAt, &backup.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		backups = append(backups, backup)
+	}
+
+	return backups, total, rows.Err()
 }

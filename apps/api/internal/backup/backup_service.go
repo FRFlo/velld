@@ -104,6 +104,20 @@ func (s *BackupService) GetAllBackups(userID uuid.UUID) ([]*BackupList, error) {
 	return s.backupRepo.GetAllBackups(userID)
 }
 
+func (s *BackupService) GetAllBackupsWithPagination(opts BackupListOptions) ([]*BackupList, int, error) {
+	if opts.Limit <= 0 {
+		opts.Limit = 10
+	}
+	if opts.Limit > 100 {
+		opts.Limit = 100
+	}
+	if opts.Offset < 0 {
+		opts.Offset = 0
+	}
+
+	return s.backupRepo.GetAllBackupsWithPagination(opts)
+}
+
 func (s *BackupService) verifyBackupTools(dbType string) error {
 	requiredTools := map[string][]string{
 		"postgresql": {"pg_dump"},

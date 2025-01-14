@@ -45,3 +45,17 @@ type BackupStats struct {
 	SuccessRate     float64 `json:"success_rate"`
 	LastBackupTime  string  `json:"last_backup_time"`
 }
+
+type PaginatedBackupResponse struct {
+	Data       []*BackupList `json:"data"`
+	Total      int          `json:"total"`
+	Page       int          `json:"page"`
+	Limit      int          `json:"limit"`
+	TotalPages int          `json:"total_pages"`
+}
+
+type BackupListRequest struct {
+	Page   int    `json:"page"`
+	Limit  int    `json:"limit"`
+	Search string `json:"search"`
+}
