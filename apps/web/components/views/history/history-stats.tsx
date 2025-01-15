@@ -1,64 +1,92 @@
 import { Card } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle, Clock, HardDrive } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 
 const stats = [
   {
     name: "Success Rate",
     value: "99.8%",
-    icon: CheckCircle2,
-    description: "Last 30 days",
-    color: "text-emerald-500",
+    change: "+0.3%",
+    status: "Highly reliable performance",
+    trend: "up",
   },
   {
     name: "Failed Backups",
     value: "2",
-    icon: AlertCircle,
-    description: "Requires attention",
-    color: "text-red-500",
+    change: "+1",
+    status: "Requires attention",
+    trend: "down",
   },
   {
     name: "Average Duration",
     value: "4.2m",
-    icon: Clock,
-    description: "Per backup",
-    color: "text-blue-500",
+    change: "75%",
+    status: "Processing normally",
+    showProgress: true,
   },
   {
     name: "Storage Used",
     value: "2.1TB",
-    icon: HardDrive,
-    description: "Total backups",
-    color: "text-purple-500",
+    change: "82%",
+    status: "Sufficient capacity",
+    showProgress: true,
   },
 ];
 
 export function HistoryStats() {
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      {stats.map((stat) => {
-        const Icon = stat.icon;
-        return (
-          <Card
-            key={stat.name}
-            className="p-6 bg-card/50 backdrop-blur-xl hover:bg-card/60 transition-colors"
-          >
-            <div className="flex items-center space-x-4">
-              <div className={`p-2 rounded-md bg-primary/10 ${stat.color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  {stat.name}
-                </p>
-                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {stat.description}
-                </p>
+      {stats.map((stat) => (
+        <Card
+          key={stat.name}
+          className="p-6 bg-background border border-border/50 hover:border-border/80 transition-colors"
+        >
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                {stat.name}
+              </p>
+              <p className="text-2xl font-semibold">{stat.value}</p>
+            </div>
+            <div className={`flex items-center ${
+              stat.trend === 'up' ? 'text-emerald-500' : 
+              stat.trend === 'down' ? 'text-amber-500' : 
+              'text-blue-500'
+            } text-xs font-medium`}>
+              {stat.trend && (
+                <>
+                  {stat.trend === 'up' ? (
+                    <ArrowUpIcon className="h-3 w-3 mr-1" />
+                  ) : (
+                    <ArrowDownIcon className="h-3 w-3 mr-1" />
+                  )}
+                </>
+              )}
+              {stat.change}
+            </div>
+          </div>
+          {stat.showProgress ? (
+            <div className="mt-4">
+              <div className="h-1 bg-muted/30 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500/50 rounded-full" 
+                  style={{ width: stat.change }}
+                />
               </div>
             </div>
-          </Card>
-        );
-      })}
+          ) : (
+            <div className="mt-4 flex items-center text-[13px] text-muted-foreground/80">
+              <div className={`h-1.5 w-1.5 rounded-full ${
+                stat.trend === 'up' ? 'bg-emerald-500' : 
+                stat.trend === 'down' ? 'bg-amber-500' : 
+                'bg-blue-500'
+              } mr-2`} />
+              {stat.status}
+            </div>
+          )}
+        </Card>
+      ))}
     </div>
   );
 }
+
+export default HistoryStats;
