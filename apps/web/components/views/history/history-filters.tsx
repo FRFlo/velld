@@ -10,16 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useBackup } from "@/hooks/use-backup";
 import { Search } from "lucide-react";
 
 export function HistoryFilters() {
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
+  const { search, setSearch, isLoading } = useBackup();
+  
   return (
     <Card className="border-none">
       <div className="flex flex-col space-y-4">
@@ -28,9 +24,10 @@ export function HistoryFilters() {
           <Input
             type="text"
             placeholder="Search history..."
-            value={searchQuery}
-            onChange={handleSearch}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="pl-10"
+            disabled={isLoading}
           />
         </div>
         <div className="flex items-center space-x-4">
