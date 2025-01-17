@@ -87,7 +87,7 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 	argCount := 2
 
 	if opts.Search != "" {
-		whereClause += fmt.Sprintf(" AND (LOWER(c.name) LIKE $%d OR LOWER(b.status) LIKE $%d)", argCount, argCount)
+		whereClause += fmt.Sprintf(" AND (LOWER(b.path) LIKE $%d OR LOWER(b.status) LIKE $%d)", argCount, argCount)
 		args = append(args, "%"+strings.ToLower(opts.Search)+"%")
 		argCount++
 	}

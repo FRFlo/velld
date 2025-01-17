@@ -6,9 +6,6 @@ export function HistoryListSkeleton() {
   return (
     <Card className="col-span-3 backdrop-blur-xl bg-card/50">
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Recent Backups</h3>
-        </div>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
