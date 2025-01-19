@@ -1,99 +1,75 @@
 'use client';
 
-import { formatSize } from '@/lib/helper';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConnections } from "@/hooks/use-connections";
-import { Database, ExternalLink, Power, Server, Settings } from 'lucide-react';
 import { ConnectionListSkeleton } from "@/components/ui/skeleton/connection-list";
-
-const statusColors = {
-  connected: 'bg-emerald-500/15 text-emerald-500',
-  disconnected: 'bg-amber-500/15 text-amber-500',
-  error: 'bg-red-500/15 text-red-500',
-};
-
-const typeLabels = {
-  mysql: 'MySQL',
-  postgresql: 'PostgreSQL',
-  mongodb: 'MongoDB',
-};
+import { useState } from 'react';
+import { ConnectionListHeader } from './connection-list/header';
+import { ConnectionCard } from './connection-list/connection-card';
+import { BackupScheduleDialog } from './connection-list/backup-schedule-dialog';
+import { useBackupConfigs } from './connection-list/use-backup-configs';
+import type { SortBy } from './connection-list/types';
 
 export function ConnectionsList() {
   const { connections, isLoading } = useConnections();
+  const { backupConfigs, handleBackupNow, handleUpdateBackupConfig } = useBackupConfigs();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('name');
+  const [scheduleDialogConnection, setScheduleDialogConnection] = useState<string | null>(null);
+
+  const filteredConnections = connections?.filter(connection => 
+    connection.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    connection.host.toLowerCase().includes(searchQuery.toLowerCase())
+  ).sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'status':
+        return a.status.localeCompare(b.status);
+      case 'type':
+        return a.type.localeCompare(b.type);
+      case 'lastBackup':
+        const aDate = backupConfigs[a.id]?.lastBackup || '0';
+        const bDate = backupConfigs[b.id]?.lastBackup || '0';
+        return bDate.localeCompare(aDate);
+      default:
+        return 0;
+    }
+  });
 
   return (
     <Card className="col-span-3 backdrop-blur-xl bg-card/50">
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold">Active Connections</h3>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Manage All
-          </Button>
-        </div>
-        <ScrollArea className="h-[500px] pr-4">
-          {isLoading ? (
-            <ConnectionListSkeleton />
-          ) : (
-            <div className="space-y-4">
-              {connections?.map((connection) => (
-                <div
-                  key={connection.id}
-                  className="p-4 rounded-lg bg-background/50 hover:bg-background/60 transition-colors border"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-2 rounded-md bg-primary/10">
-                        <Database className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{connection.name}</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {typeLabels[connection.type]}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {connection.host}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <Badge
-                          variant="secondary"
-                          className={statusColors[connection.status]}
-                        >
-                          {connection.status}
-                        </Badge>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {connection.last_connected_at}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Power className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                      <Server className="h-4 w-4 mr-1" />
-                      Total Size: {formatSize(connection.database_size)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+        <ConnectionListHeader 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
+        
+        {isLoading ? (
+          <ConnectionListSkeleton />
+        ) : (
+          <div className="space-y-3">
+            {filteredConnections?.map((connection) => (
+              <ConnectionCard
+                key={connection.id}
+                connection={connection}
+                backupConfig={backupConfigs[connection.id]}
+                onBackupNow={handleBackupNow}
+                onSchedule={() => setScheduleDialogConnection(connection.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        <BackupScheduleDialog
+          connectionId={scheduleDialogConnection}
+          connection={connections?.find(c => c.id === scheduleDialogConnection)}
+          backupConfig={scheduleDialogConnection ? backupConfigs[scheduleDialogConnection] : undefined}
+          onClose={() => setScheduleDialogConnection(null)}
+          onUpdateConfig={handleUpdateBackupConfig}
+        />
       </div>
     </Card>
   );

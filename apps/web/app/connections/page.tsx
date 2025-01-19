@@ -2,7 +2,6 @@
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { ConnectionsList } from "@/components/views/connections/connection-list";
-import { ConnectionStats } from "@/components/views/connections/connection-stats";
 import { AddConnectionDialog } from "@/components/views/connections/add-connection-dialog";
 
 export default function ConnectionsPage() {
@@ -21,10 +20,7 @@ export default function ConnectionsPage() {
             <AddConnectionDialog/>
           </div>
 
-          <div className="grid gap-6">
-            <ConnectionStats />
-            <ConnectionsList />
-          </div>
+          <ConnectionsList />
         </div>
       </div>
     </div>

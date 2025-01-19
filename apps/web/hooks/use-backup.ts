@@ -23,7 +23,7 @@ export function useBackup() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["backups"],
+        queryKey: ['backups'],
       });
       toast({
         title: "Success",
