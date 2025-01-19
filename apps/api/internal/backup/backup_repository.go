@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-
-	"github.com/google/uuid"
+	"time"
+	"github.com/dendianugerah/velld/internal/common"
 )
 
 type BackupRepository struct {
@@ -18,67 +18,288 @@ func NewBackupRepository(db *sql.DB) *BackupRepository {
 	}
 }
 
-func (r *BackupRepository) CreateBackup(backup *Backup) error {
-	_, err := r.db.Exec("INSERT INTO backups (id, connection_id, status, path, size, scheduled_time, started_time, completed_time, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-		backup.ID, backup.ConnectionID, backup.Status, backup.Path, backup.Size, backup.ScheduledTime, backup.StartedTime, backup.CompletedTime, backup.CreatedAt, backup.UpdatedAt)
+func (r *BackupRepository) CreateBackupSchedule(schedule *BackupSchedule) error {
+	var nextRunStr *string
+	if schedule.NextRunTime != nil {
+		str := schedule.NextRunTime.Format(time.RFC3339)
+		nextRunStr = &str
+	}
+
+	var lastBackupStr *string
+	if schedule.LastBackupTime != nil {
+		str := schedule.LastBackupTime.Format(time.RFC3339)
+		lastBackupStr = &str
+	}
+
+	now := time.Now().Format(time.RFC3339)
+	_, err := r.db.Exec(`
+		INSERT INTO backup_schedules (
+			id, connection_id, enabled, cron_schedule, retention_days,
+			next_run_time, last_backup_time, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		schedule.ID, schedule.ConnectionID, schedule.Enabled,
+		schedule.CronSchedule, schedule.RetentionDays,
+		nextRunStr, lastBackupStr, now, now)
 	return err
 }
 
-func (r *BackupRepository) GetAllBackups(UserID uuid.UUID) ([]*BackupList, error) {
-	query := `
-			SELECT 
-					b.id, b.connection_id, c.type, b.status, b.path, b.size, 
-					b.scheduled_time, b.started_time, b.completed_time, b.created_at, b.updated_at
-			FROM 
-					backups b
-			INNER JOIN 
-					connections c ON b.connection_id = c.id
-			WHERE 
-					c.user_id = $1;
-	`
+func (r *BackupRepository) UpdateBackupSchedule(schedule *BackupSchedule) error {
+	var nextRunStr *string
+	if schedule.NextRunTime != nil {
+		str := schedule.NextRunTime.Format(time.RFC3339)
+		nextRunStr = &str
+	}
 
-	rows, err := r.db.Query(query, UserID)
+	var lastBackupStr *string
+	if schedule.LastBackupTime != nil {
+		str := schedule.LastBackupTime.Format(time.RFC3339)
+		lastBackupStr = &str
+	}
+
+	_, err := r.db.Exec(`
+		UPDATE backup_schedules SET 
+			enabled = $1, 
+			cron_schedule = $2, 
+			retention_days = $3, 
+			next_run_time = $4,
+			last_backup_time = $5,
+			updated_at = $6
+		WHERE id = $7`,
+		schedule.Enabled, schedule.CronSchedule, schedule.RetentionDays,
+		nextRunStr, lastBackupStr, time.Now().Format(time.RFC3339),
+		schedule.ID)
+	return err
+}
+
+func (r *BackupRepository) GetBackupSchedule(connectionID string) (*BackupSchedule, error) {
+	var (
+		nextRunStr    sql.NullString
+		lastBackupStr sql.NullString
+		createdAtStr  string
+		updatedAtStr  string
+	)
+	schedule := &BackupSchedule{}
+	err := r.db.QueryRow(`
+		SELECT id, connection_id, enabled, cron_schedule, retention_days,
+		       next_run_time, last_backup_time, created_at, updated_at 
+		FROM backup_schedules 
+		WHERE connection_id = $1 AND enabled = true
+		ORDER BY created_at DESC LIMIT 1`,
+		connectionID).Scan(
+		&schedule.ID, &schedule.ConnectionID, &schedule.Enabled,
+		&schedule.CronSchedule, &schedule.RetentionDays,
+		&nextRunStr, &lastBackupStr, &createdAtStr, &updatedAtStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse next_run_time if not null
+	if nextRunStr.Valid {
+		nextRun, err := common.ParseTime(nextRunStr.String)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing next_run_time: %v", err)
+		}
+		schedule.NextRunTime = &nextRun
+	}
+
+	// Parse last_backup_time if not null
+	if lastBackupStr.Valid {
+		lastBackup, err := common.ParseTime(lastBackupStr.String)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing last_backup_time: %v", err)
+		}
+		schedule.LastBackupTime = &lastBackup
+	}
+
+	// Parse created_at and updated_at
+	createdAt, err := common.ParseTime(createdAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing created_at: %v", err)
+	}
+	schedule.CreatedAt = createdAt
+
+	updatedAt, err := common.ParseTime(updatedAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing updated_at: %v", err)
+	}
+	schedule.UpdatedAt = updatedAt
+
+	return schedule, nil
+}
+
+func (r *BackupRepository) GetAllActiveSchedules() ([]*BackupSchedule, error) {
+	rows, err := r.db.Query(`
+		SELECT id, connection_id, enabled, cron_schedule, retention_days,
+		       next_run_time, last_backup_time, created_at, updated_at 
+		FROM backup_schedules 
+		WHERE enabled = true
+		ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	backups := make([]*BackupList, 0)
+	var schedules []*BackupSchedule
 	for rows.Next() {
-		backup := &BackupList{}
-		err := rows.Scan(
-			&backup.ID, &backup.ConnectionID, &backup.DatabaseType, &backup.Status, &backup.Path,
-			&backup.Size, &backup.ScheduledTime, &backup.StartedTime, &backup.CompletedTime,
-			&backup.CreatedAt, &backup.UpdatedAt,
+		var (
+			nextRunStr    sql.NullString
+			lastBackupStr sql.NullString
+			createdAtStr  string
+			updatedAtStr  string
 		)
+		schedule := &BackupSchedule{}
+		err := rows.Scan(
+			&schedule.ID, &schedule.ConnectionID, &schedule.Enabled,
+			&schedule.CronSchedule, &schedule.RetentionDays,
+			&nextRunStr, &lastBackupStr, &createdAtStr, &updatedAtStr)
 		if err != nil {
 			return nil, err
 		}
-		backups = append(backups, backup)
+
+		// Parse next_run_time if not null
+		if nextRunStr.Valid {
+			nextRun, err := common.ParseTime(nextRunStr.String)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing next_run_time: %v", err)
+			}
+			schedule.NextRunTime = &nextRun
+		}
+
+		// Parse last_backup_time if not null
+		if lastBackupStr.Valid {
+			lastBackup, err := common.ParseTime(lastBackupStr.String)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing last_backup_time: %v", err)
+			}
+			schedule.LastBackupTime = &lastBackup
+		}
+
+		// Parse created_at and updated_at
+		createdAt, err := common.ParseTime(createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing created_at: %v", err)
+		}
+		schedule.CreatedAt = createdAt
+
+		updatedAt, err := common.ParseTime(updatedAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing updated_at: %v", err)
+		}
+		schedule.UpdatedAt = updatedAt
+
+		schedules = append(schedules, schedule)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return backups, nil
+	return schedules, rows.Err()
 }
 
-func (r *BackupRepository) GetBackup(id string) (*Backup, error) {
-	backup := &Backup{}
-	err := r.db.QueryRow("SELECT id, connection_id, status, path, size, scheduled_time, completed_time, created_at, updated_at FROM backups WHERE id = $1", id).
-		Scan(&backup.ID, &backup.ConnectionID, &backup.Status, &backup.Path, &backup.Size, &backup.ScheduledTime, &backup.CompletedTime, &backup.CreatedAt, &backup.UpdatedAt)
+// Backup Methods
+
+func (r *BackupRepository) CreateBackup(backup *Backup) error {
+	_, err := r.db.Exec(`
+		INSERT INTO backups (
+			id, connection_id, schedule_id, status, path, size,
+			started_time, completed_time, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		backup.ID, backup.ConnectionID, backup.ScheduleID,
+		backup.Status, backup.Path, backup.Size,
+		backup.StartedTime, backup.CompletedTime,
+		backup.CreatedAt, backup.UpdatedAt)
+	return err
+}
+
+func (r *BackupRepository) UpdateBackupStatus(id string, status string) error {
+	_, err := r.db.Exec("UPDATE backups SET status = $1, updated_at = $2 WHERE id = $3",
+		status, time.Now().Format(time.RFC3339), id)
+	return err
+}
+
+func (r *BackupRepository) GetBackupsOlderThan(connectionID string, cutoffTime time.Time) ([]*Backup, error) {
+	rows, err := r.db.Query(`
+		SELECT id, path, created_at 
+		FROM backups 
+		WHERE connection_id = $1 
+		AND created_at < $2 
+		AND status = 'completed'`,
+		connectionID, cutoffTime)
 	if err != nil {
 		return nil, err
 	}
-	return backup, nil
+	defer rows.Close()
+
+	var backups []*Backup
+	for rows.Next() {
+		backup := &Backup{}
+		var createdAtStr string
+		err := rows.Scan(&backup.ID, &backup.Path, &createdAtStr)
+		if err != nil {
+			return nil, err
+		}
+		createdAt, err := common.ParseTime(createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing created_at: %v", err)
+		}
+		backup.CreatedAt = createdAt
+		backups = append(backups, backup)
+	}
+	return backups, rows.Err()
 }
 
-type BackupListOptions struct {
-	UserID uuid.UUID
-	Limit  int
-	Offset int
-	Search string
+func (r *BackupRepository) DeleteBackup(id string) error {
+	_, err := r.db.Exec("DELETE FROM backups WHERE id = $1", id)
+	return err
+}
+
+func (r *BackupRepository) GetBackup(id string) (*Backup, error) {
+	var (
+		startedTimeStr   string
+		completedTimeStr sql.NullString
+		createdAtStr     string
+		updatedAtStr     string
+	)
+	backup := &Backup{}
+	err := r.db.QueryRow(`
+		SELECT id, connection_id, schedule_id, status, path, size,
+			   started_time, completed_time, created_at, updated_at 
+		FROM backups WHERE id = $1`, id).
+		Scan(&backup.ID, &backup.ConnectionID, &backup.ScheduleID,
+			&backup.Status, &backup.Path, &backup.Size,
+			&startedTimeStr, &completedTimeStr,
+			&createdAtStr, &updatedAtStr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Parse started_time
+	startedTime, err := common.ParseTime(startedTimeStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing started_time: %v", err)
+	}
+	backup.StartedTime = startedTime
+
+	// Parse completed_time if not null
+	if completedTimeStr.Valid {
+		completedTime, err := common.ParseTime(completedTimeStr.String)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing completed_time: %v", err)
+		}
+		backup.CompletedTime = &completedTime
+	}
+
+	// Parse created_at and updated_at
+	createdAt, err := common.ParseTime(createdAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing created_at: %v", err)
+	}
+	backup.CreatedAt = createdAt
+
+	updatedAt, err := common.ParseTime(updatedAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing updated_at: %v", err)
+	}
+	backup.UpdatedAt = updatedAt
+
+	return backup, nil
 }
 
 func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) ([]*BackupList, int, error) {
@@ -92,7 +313,6 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 		argCount++
 	}
 
-	// Get total count
 	countQuery := fmt.Sprintf(`
 		SELECT COUNT(*) 
 		FROM backups b
@@ -104,11 +324,10 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 		return nil, 0, err
 	}
 
-	// Get paginated results
 	query := fmt.Sprintf(`
 		SELECT 
-			b.id, b.connection_id, c.type, b.status, b.path, b.size, 
-			b.scheduled_time, b.started_time, b.completed_time, b.created_at, b.updated_at
+			b.id, b.connection_id, c.type, b.schedule_id, b.status, b.path, b.size,
+			b.started_time, b.completed_time, b.created_at, b.updated_at
 		FROM backups b
 		INNER JOIN connections c ON b.connection_id = c.id
 		%s
@@ -125,17 +344,39 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 
 	backups := make([]*BackupList, 0)
 	for rows.Next() {
+		var (
+			startedTimeStr   sql.NullString
+			completedTimeStr sql.NullString
+			createdAtStr     string
+			updatedAtStr     string
+		)
 		backup := &BackupList{}
 		err := rows.Scan(
-			&backup.ID, &backup.ConnectionID, &backup.DatabaseType, &backup.Status, &backup.Path,
-			&backup.Size, &backup.ScheduledTime, &backup.StartedTime, &backup.CompletedTime,
-			&backup.CreatedAt, &backup.UpdatedAt,
+			&backup.ID, &backup.ConnectionID, &backup.DatabaseType,
+			&backup.ScheduleID, &backup.Status, &backup.Path, &backup.Size,
+			&startedTimeStr, &completedTimeStr,
+			&createdAtStr, &updatedAtStr,
 		)
 		if err != nil {
 			return nil, 0, err
 		}
+
+		backup.StartedTime = startedTimeStr.String
+		backup.CompletedTime = completedTimeStr.String
+		backup.CreatedAt = createdAtStr
+		backup.UpdatedAt = updatedAtStr
+
 		backups = append(backups, backup)
 	}
 
 	return backups, total, rows.Err()
+}
+
+func (r *BackupRepository) UpdateBackupStatusAndSchedule(id string, status string, scheduleID string) error {
+	_, err := r.db.Exec(`
+		UPDATE backups 
+		SET status = $1, schedule_id = $2, updated_at = $3 
+		WHERE id = $4`,
+		status, scheduleID, time.Now().Format(time.RFC3339), id)
+	return err
 }

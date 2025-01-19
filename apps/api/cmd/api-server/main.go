@@ -100,6 +100,8 @@ func main() {
 	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/backups/schedule", backupHandler.ScheduleBackup).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST", "OPTIONS")
 
 	// Start server
 	log.Println("Server starting on :8080")

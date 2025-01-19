@@ -101,3 +101,49 @@ func (h *BackupHandler) ListBackups(w http.ResponseWriter, r *http.Request) {
 
 	response.SendPaginatedSuccess(w, "Backups retrieved successfully", backups, page, limit, total)
 }
+
+func (h *BackupHandler) ScheduleBackup(w http.ResponseWriter, r *http.Request) {
+	var req ScheduleBackupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if req.ConnectionID == "" {
+		response.SendError(w, http.StatusBadRequest, "connection_id is required")
+		return
+	}
+	if req.CronSchedule == "" {
+		response.SendError(w, http.StatusBadRequest, "cron_schedule is required")
+		return
+	}
+	if req.RetentionDays <= 0 {
+		response.SendError(w, http.StatusBadRequest, "retention_days must be greater than 0")
+		return
+	}
+
+	err := h.backupService.ScheduleBackup(&req)
+	if err != nil {
+		response.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.SendSuccess(w, "Backup scheduled successfully", nil)
+}
+
+func (h *BackupHandler) DisableBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	connectionID := vars["connection_id"]
+
+	err := h.backupService.DisableBackupSchedule(connectionID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			response.SendError(w, http.StatusNotFound, "No active schedule found")
+			return
+		}
+		response.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.SendSuccess(w, "Backup schedule disabled successfully", nil)
+}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/google/uuid"
+	"github.com/robfig/cron/v3"
 )
 
 type BackupService struct {
@@ -17,6 +18,8 @@ type BackupService struct {
 	backupDir   string
 	toolPaths   map[string]string
 	backupRepo  *BackupRepository
+	cronManager *cron.Cron
+	cronEntries map[string]cron.EntryID // map[scheduleID]entryID
 }
 
 func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPaths map[string]string, backupRepo *BackupRepository) *BackupService {
@@ -29,12 +32,54 @@ func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPa
 		toolPaths = make(map[string]string)
 	}
 
-	return &BackupService{
+	cronManager := cron.New(cron.WithSeconds())
+	service := &BackupService{
 		connStorage: cs,
 		backupDir:   backupDir,
 		toolPaths:   toolPaths,
 		backupRepo:  backupRepo,
+		cronManager: cronManager,
+		cronEntries: make(map[string]cron.EntryID),
 	}
+
+	// Recover existing schedules before starting the cron manager
+	if err := service.recoverSchedules(); err != nil {
+		fmt.Printf("Error recovering schedules: %v\n", err)
+	}
+
+	cronManager.Start()
+	return service
+}
+
+func (s *BackupService) recoverSchedules() error {
+	schedules, err := s.backupRepo.GetAllActiveSchedules()
+	if err != nil {
+		return fmt.Errorf("failed to get active schedules: %v", err)
+	}
+
+	now := time.Now()
+	for _, schedule := range schedules {
+		scheduleID := schedule.ID.String()
+
+		// Check if we missed any backups
+		if schedule.NextRunTime != nil && schedule.NextRunTime.Before(now) {
+			// Execute a backup immediately for missed schedule
+			go s.executeCronBackup(schedule)
+		}
+
+		// Re-register the cron job
+		entryID, err := s.cronManager.AddFunc(schedule.CronSchedule, func() {
+			s.executeCronBackup(schedule)
+		})
+		if err != nil {
+			fmt.Printf("Error re-registering schedule %s: %v\n", scheduleID, err)
+			continue
+		}
+
+		s.cronEntries[scheduleID] = entryID
+	}
+
+	return nil
 }
 
 func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
@@ -98,10 +143,6 @@ func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
 
 func (s *BackupService) GetBackup(id string) (*Backup, error) {
 	return s.backupRepo.GetBackup(id)
-}
-
-func (s *BackupService) GetAllBackups(userID uuid.UUID) ([]*BackupList, error) {
-	return s.backupRepo.GetAllBackups(userID)
 }
 
 func (s *BackupService) GetAllBackupsWithPagination(opts BackupListOptions) ([]*BackupList, int, error) {
@@ -207,22 +248,107 @@ func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, ou
 		args = append(args, "--password", conn.Password)
 	}
 
-	// if conn.AuthenticationDatabase != "" {
-	// 	args = append(args, "--authenticationDatabase", conn.AuthenticationDatabase)
-	// }
-
 	cmd := exec.Command(mongoDumpPath, args...)
 	return cmd
 }
 
-func (s *BackupService) ScheduleBackup(backup *Backup) error {
+func (s *BackupService) ScheduleBackup(req *ScheduleBackupRequest) error {
+	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	schedule, err := parser.Parse(req.CronSchedule)
+	if err != nil {
+		return fmt.Errorf("invalid cron schedule: %v", err)
+	}
 
-	// TODO: Implement cron scheduling logic here
-	// This would typically involve:
-	// 1. Validating the cron expression
-	// 2. Creating a cron job
-	// 3. Storing the schedule in the database
-	// 4. Calculating and setting the NextRunTime
+	nextRun := schedule.Next(time.Now())
+
+	backupSchedule := &BackupSchedule{
+		ID:            uuid.New(),
+		ConnectionID:  req.ConnectionID,
+		Enabled:       true,
+		CronSchedule:  req.CronSchedule,
+		RetentionDays: req.RetentionDays,
+		NextRunTime:   &nextRun,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	if err := s.backupRepo.CreateBackupSchedule(backupSchedule); err != nil {
+		return fmt.Errorf("failed to save backup schedule: %v", err)
+	}
+
+	scheduleID := backupSchedule.ID.String()
+	entryID, err := s.cronManager.AddFunc(req.CronSchedule, func() {
+		s.executeCronBackup(backupSchedule)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to schedule backup: %v", err)
+	}
+
+	s.cronEntries[scheduleID] = entryID
+	return nil
+}
+
+func (s *BackupService) executeCronBackup(schedule *BackupSchedule) {
+	backup, err := s.CreateBackup(schedule.ConnectionID)
+	if err != nil {
+		// Log error but continue with schedule update
+		fmt.Printf("Error executing scheduled backup: %v\n", err)
+	} else {
+		// Update backup with schedule ID and status
+		scheduleIDStr := schedule.ID.String()
+		if err := s.backupRepo.UpdateBackupStatusAndSchedule(backup.ID.String(), backup.Status, scheduleIDStr); err != nil {
+			fmt.Printf("Error updating backup status and schedule: %v\n", err)
+		}
+	}
+
+	// Update schedule's next run time and last backup time
+	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	cronSchedule, _ := parser.Parse(schedule.CronSchedule)
+	nextRun := cronSchedule.Next(time.Now())
+	schedule.NextRunTime = &nextRun
+	now := time.Now()
+	schedule.LastBackupTime = &now
+	schedule.UpdatedAt = now
+
+	if err := s.backupRepo.UpdateBackupSchedule(schedule); err != nil {
+		fmt.Printf("Error updating backup schedule: %v\n", err)
+	}
+
+	if schedule.RetentionDays > 0 {
+		s.cleanupOldBackups(schedule.ConnectionID, schedule.RetentionDays)
+	}
+}
+
+func (s *BackupService) cleanupOldBackups(connectionID string, retentionDays int) {
+	cutoffTime := time.Now().AddDate(0, 0, -retentionDays)
+	oldBackups, err := s.backupRepo.GetBackupsOlderThan(connectionID, cutoffTime)
+	if err != nil {
+		return
+	}
+
+	for _, backup := range oldBackups {
+		os.Remove(backup.Path)
+		s.backupRepo.DeleteBackup(backup.ID.String())
+	}
+}
+
+func (s *BackupService) DisableBackupSchedule(connectionID string) error {
+	schedule, err := s.backupRepo.GetBackupSchedule(connectionID)
+	if err != nil {
+		return err
+	}
+
+	scheduleID := schedule.ID.String()
+	if entryID, exists := s.cronEntries[scheduleID]; exists {
+		s.cronManager.Remove(entryID)
+		delete(s.cronEntries, scheduleID)
+	}
+
+	schedule.Enabled = false
+	schedule.UpdatedAt = time.Now()
+	if err := s.backupRepo.UpdateBackupSchedule(schedule); err != nil {
+		return err
+	}
 
 	return nil
 }
