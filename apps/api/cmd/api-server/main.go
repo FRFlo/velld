@@ -17,7 +17,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -81,9 +80,9 @@ func main() {
 
 	protected.HandleFunc("/connections/test", connHandler.TestConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.SaveConnection).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT", "OPTIONS")
-	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET")
+	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT")
+	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET")
 
 	// Configure backup tool paths from environment
 	toolPaths := map[string]string{
@@ -97,11 +96,12 @@ func main() {
 	backupService := backup.NewBackupService(connStorage, "./backups", toolPaths, backupRepo)
 	backupHandler := backup.NewBackupHandler(backupService)
 
-	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/backups/schedule", backupHandler.ScheduleBackup).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST")
+	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET")
+	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET")
+	protected.HandleFunc("/backups/schedule", backupHandler.ScheduleBackup).Methods("POST")
+	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST")
+	protected.HandleFunc("/backups/{connection_id}/schedule", backupHandler.UpdateBackupSchedule).Methods("PUT")
 
 	// Start server
 	log.Println("Server starting on :8080")

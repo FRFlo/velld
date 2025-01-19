@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
 	"github.com/dendianugerah/velld/internal/common"
 )
 
@@ -44,31 +45,18 @@ func (r *BackupRepository) CreateBackupSchedule(schedule *BackupSchedule) error 
 }
 
 func (r *BackupRepository) UpdateBackupSchedule(schedule *BackupSchedule) error {
-	var nextRunStr *string
-	if schedule.NextRunTime != nil {
-		str := schedule.NextRunTime.Format(time.RFC3339)
-		nextRunStr = &str
+	query := `
+		UPDATE backup_schedules 
+		SET cron_schedule = ?, retention_days = ?, updated_at = ?
+		WHERE id = ?
+	`
+
+	_, err := r.db.Exec(query, schedule.CronSchedule, schedule.RetentionDays, time.Now(), schedule.ID)
+	if err != nil {
+		return fmt.Errorf("failed to update backup schedule: %v", err)
 	}
 
-	var lastBackupStr *string
-	if schedule.LastBackupTime != nil {
-		str := schedule.LastBackupTime.Format(time.RFC3339)
-		lastBackupStr = &str
-	}
-
-	_, err := r.db.Exec(`
-		UPDATE backup_schedules SET 
-			enabled = $1, 
-			cron_schedule = $2, 
-			retention_days = $3, 
-			next_run_time = $4,
-			last_backup_time = $5,
-			updated_at = $6
-		WHERE id = $7`,
-		schedule.Enabled, schedule.CronSchedule, schedule.RetentionDays,
-		nextRunStr, lastBackupStr, time.Now().Format(time.RFC3339),
-		schedule.ID)
-	return err
+	return nil
 }
 
 func (r *BackupRepository) GetBackupSchedule(connectionID string) (*BackupSchedule, error) {

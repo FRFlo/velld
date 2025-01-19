@@ -147,3 +147,35 @@ func (h *BackupHandler) DisableBackupSchedule(w http.ResponseWriter, r *http.Req
 
 	response.SendSuccess(w, "Backup schedule disabled successfully", nil)
 }
+
+func (h *BackupHandler) UpdateBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	connectionID := vars["connection_id"]
+
+	var req UpdateScheduleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if req.CronSchedule == "" {
+		response.SendError(w, http.StatusBadRequest, "cron_schedule is required")
+		return
+	}
+	if req.RetentionDays <= 0 {
+		response.SendError(w, http.StatusBadRequest, "retention_days must be greater than 0")
+		return
+	}
+
+	err := h.backupService.UpdateBackupSchedule(connectionID, &req)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			response.SendError(w, http.StatusNotFound, "No active schedule found")
+			return
+		}
+		response.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.SendSuccess(w, "Backup schedule updated successfully", nil)
+}

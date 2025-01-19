@@ -93,3 +93,8 @@ type BackupListOptions struct {
 	Offset int
 	Search string
 }
+
+type UpdateScheduleRequest struct {
+	CronSchedule  string `json:"cron_schedule"`
+	RetentionDays int    `json:"retention_days"`
+}

@@ -352,3 +352,42 @@ func (s *BackupService) DisableBackupSchedule(connectionID string) error {
 
 	return nil
 }
+
+func (s *BackupService) UpdateBackupSchedule(connectionID string, req *UpdateScheduleRequest) error {
+	schedule, err := s.backupRepo.GetBackupSchedule(connectionID)
+	if err != nil {
+		return err
+	}
+
+	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	_, err = parser.Parse(req.CronSchedule)
+	if err != nil {
+		return fmt.Errorf("invalid cron schedule: %v", err)
+	}
+
+	schedule.CronSchedule = req.CronSchedule
+	schedule.RetentionDays = req.RetentionDays
+	err = s.backupRepo.UpdateBackupSchedule(schedule)
+	if err != nil {
+		return err
+	}
+
+	// Remove old cron job
+	if entryID, ok := s.cronEntries[schedule.ID.String()]; ok {
+		s.cronManager.Remove(entryID)
+		delete(s.cronEntries, schedule.ID.String())
+	}
+
+	// Add new cron job
+	entryID, err := s.cronManager.AddFunc(schedule.CronSchedule, func() {
+		s.executeCronBackup(schedule)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to register cron job: %v", err)
+	}
+
+	// Store the new entry ID
+	s.cronEntries[schedule.ID.String()] = entryID
+
+	return nil
+}
