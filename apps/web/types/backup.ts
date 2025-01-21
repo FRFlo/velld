@@ -4,6 +4,7 @@ export interface Backup {
   id: string;
   connection_id: string;
   database_type: string;
+  schedule_id?: string;
   size: number;
   status: string;
   path: string;

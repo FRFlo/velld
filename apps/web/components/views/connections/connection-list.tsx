@@ -7,12 +7,10 @@ import { useState } from 'react';
 import { ConnectionListHeader } from './connection-list/header';
 import { ConnectionCard } from './connection-list/connection-card';
 import { BackupScheduleDialog } from './connection-list/backup-schedule-dialog';
-import { useBackupConfigs } from './connection-list/use-backup-configs';
 import type { SortBy } from './connection-list/types';
 
 export function ConnectionsList() {
   const { connections, isLoading } = useConnections();
-  const { backupConfigs, handleBackupNow, handleUpdateBackupConfig } = useBackupConfigs();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('name');
   const [scheduleDialogConnection, setScheduleDialogConnection] = useState<string | null>(null);
@@ -29,9 +27,7 @@ export function ConnectionsList() {
       case 'type':
         return a.type.localeCompare(b.type);
       case 'lastBackup':
-        const aDate = backupConfigs[a.id]?.lastBackup || '0';
-        const bDate = backupConfigs[b.id]?.lastBackup || '0';
-        return bDate.localeCompare(aDate);
+        return 0;
       default:
         return 0;
     }
@@ -55,8 +51,6 @@ export function ConnectionsList() {
               <ConnectionCard
                 key={connection.id}
                 connection={connection}
-                backupConfig={backupConfigs[connection.id]}
-                onBackupNow={handleBackupNow}
                 onSchedule={() => setScheduleDialogConnection(connection.id)}
               />
             ))}
@@ -66,9 +60,7 @@ export function ConnectionsList() {
         <BackupScheduleDialog
           connectionId={scheduleDialogConnection}
           connection={connections?.find(c => c.id === scheduleDialogConnection)}
-          backupConfig={scheduleDialogConnection ? backupConfigs[scheduleDialogConnection] : undefined}
           onClose={() => setScheduleDialogConnection(null)}
-          onUpdateConfig={handleUpdateBackupConfig}
         />
       </div>
     </Card>

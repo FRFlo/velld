@@ -6,27 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Database, Clock, Settings2, Play, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Connection } from '@/types/connection';
-import type { BackupConfig } from './types';
 import { statusColors, typeLabels } from './types';
+import { useBackup } from '@/hooks/use-backup';
 
 interface ConnectionCardProps {
   connection: Connection;
-  backupConfig?: BackupConfig;
-  onBackupNow: (connectionId: string) => void;
+  isScheduled?: boolean;
+  lastBackupTime?: string;
+  scheduleFrequency?: string;
   onSchedule: () => void;
 }
 
 export function ConnectionCard({
   connection,
-  backupConfig,
-  onBackupNow,
+  isScheduled,
+  lastBackupTime,
+  scheduleFrequency,
   onSchedule,
 }: ConnectionCardProps) {
+  const { createBackup, isCreating } = useBackup();
+
   return (
     <div
       className={cn(
         "p-4 rounded-lg transition-all duration-200 border",
-        backupConfig?.enabled
+        isScheduled
           ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20"
           : "bg-background/50 hover:bg-background/80 border-border/50"
       )}
@@ -35,13 +39,13 @@ export function ConnectionCard({
         <div className="flex items-center space-x-4">
           <div className={cn(
             "p-2 rounded-md",
-            backupConfig?.enabled
+            isScheduled
               ? "bg-emerald-500/10"
               : "bg-primary/10"
           )}>
             <Database className={cn(
               "h-5 w-5",
-              backupConfig?.enabled
+              isScheduled
                 ? "text-emerald-500"
                 : "text-primary"
             )} />
@@ -63,21 +67,21 @@ export function ConnectionCard({
               <span>{connection.host}</span>
               <span>•</span>
               <span>{formatSize(connection.database_size)}</span>
-              {backupConfig?.enabled && (
+              {isScheduled && scheduleFrequency && (
                 <>
                   <span>•</span>
                   <span className="flex items-center text-emerald-500">
                     <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Auto-backup {backupConfig.schedule}
+                    Auto-backup {scheduleFrequency}
                   </span>
                 </>
               )}
-              {backupConfig?.lastBackup && (
+              {lastBackupTime && (
                 <>
                   <span>•</span>
                   <span className="flex items-center">
                     <Clock className="h-3 w-3 mr-1" />
-                    Last backup: {new Date(backupConfig.lastBackup).toLocaleString()}
+                    Last backup: {new Date(lastBackupTime).toLocaleString()}
                   </span>
                 </>
               )}
@@ -87,9 +91,10 @@ export function ConnectionCard({
         
         <div className="flex items-center space-x-2">
           <Button 
-            variant={backupConfig?.enabled ? "default" : "secondary"}
+            variant={isScheduled ? "default" : "secondary"}
             size="sm"
-            onClick={() => onBackupNow(connection.id)}
+            onClick={() => createBackup(connection.id)}
+            disabled={isCreating}
             className="space-x-1"
           >
             <Play className="h-3 w-3" />
@@ -97,7 +102,7 @@ export function ConnectionCard({
           </Button>
           
           <Button 
-            variant={backupConfig?.enabled ? "default" : "outline"} 
+            variant={isScheduled ? "default" : "outline"} 
             size="sm" 
             className="space-x-1"
             onClick={onSchedule}

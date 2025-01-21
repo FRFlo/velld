@@ -29,3 +29,28 @@ export async function getBackups(params?: GetBackupsParams): Promise<BackupListR
     method: 'GET',
   });
 }
+export interface ScheduleBackupParams {
+  connection_id: string;
+  cron_schedule: string;
+  retention_days: number;
+}
+
+export async function scheduleBackup(params: ScheduleBackupParams): Promise<void> {
+  return apiRequest('/api/backups/schedule', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function updateSchedule(connectionId: string, params: Omit<ScheduleBackupParams, 'connection_id'>): Promise<void> {
+  return apiRequest(`/api/backups/${connectionId}/schedule`, {
+    method: 'PUT',
+    body: JSON.stringify(params),
+  });
+}
+
+export async function disableBackupSchedule(connectionId: string): Promise<void> {
+  return apiRequest(`/api/backups/${connectionId}/schedule/disable`, {
+    method: 'POST',
+  });
+}
