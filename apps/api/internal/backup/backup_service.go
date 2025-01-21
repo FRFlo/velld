@@ -14,7 +14,7 @@ import (
 )
 
 type BackupService struct {
-	connStorage *connection.ConnectionStorage
+	connStorage *connection.ConnectionRepository
 	backupDir   string
 	toolPaths   map[string]string
 	backupRepo  *BackupRepository
@@ -22,7 +22,7 @@ type BackupService struct {
 	cronEntries map[string]cron.EntryID // map[scheduleID]entryID
 }
 
-func NewBackupService(cs *connection.ConnectionStorage, backupDir string, toolPaths map[string]string, backupRepo *BackupRepository) *BackupService {
+func NewBackupService(cs *connection.ConnectionRepository, backupDir string, toolPaths map[string]string, backupRepo *BackupRepository) *BackupService {
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
 		panic(err)
 	}

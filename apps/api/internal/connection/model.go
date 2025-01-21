@@ -16,8 +16,8 @@ type StoredConnection struct {
 	Password        string     `json:"password"`
 	DatabaseName    string     `json:"database_name"`
 	SSL             bool       `json:"ssl"`
-	CreatedAt       string		 `json:"created_at"`
-	UpdatedAt       string		 `json:"updated_at"`
+	CreatedAt       string     `json:"created_at"`
+	UpdatedAt       string     `json:"updated_at"`
 	LastConnectedAt *time.Time `json:"last_connected_at"`
 	UserID          uuid.UUID  `json:"user_id"`
 	Status          string     `json:"status"`
@@ -44,4 +44,13 @@ type ConnectionStats struct {
 	InactiveCount    int     `json:"inactive_count"`
 	SSLCount         int64   `json:"ssl_count"`
 	SSLPercentage    float64 `json:"ssl_percentage"`
+}
+
+type ConnectionListItem struct {
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	Type           string  `json:"type"`
+	DatabaseSize   int64   `json:"database_size"`
+	LastBackupTime *string `json:"last_backup_time"`
+	BackupEnabled  bool    `json:"backup_enabled"`
 }

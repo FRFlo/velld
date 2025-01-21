@@ -47,9 +47,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	connStorage := connection.NewConnectionStorage(db, cryptoService)
+	connRepo := connection.NewConnectionRepository(db, cryptoService)
+	connService := connection.NewConnectionService(connRepo, connManager)
 
-	connHandler := connection.NewConnectionHandler(connManager, connStorage)
+	connHandler := connection.NewConnectionHandler(connService)
 	authHandler := auth.NewAuthHandler(authService)
 
 	authMiddleware := middleware.NewAuthMiddleware(jwtSecret)
@@ -80,9 +81,9 @@ func main() {
 
 	protected.HandleFunc("/connections/test", connHandler.TestConnection).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.SaveConnection).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET")
-	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT")
-	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET")
+	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT", "OPTIONS")
+	protected.HandleFunc("/connections/stats", connHandler.GetConnectionStats).Methods("GET", "OPTIONS")
 
 	// Configure backup tool paths from environment
 	toolPaths := map[string]string{
@@ -93,15 +94,15 @@ func main() {
 	}
 
 	backupRepo := backup.NewBackupRepository(db)
-	backupService := backup.NewBackupService(connStorage, "./backups", toolPaths, backupRepo)
+	backupService := backup.NewBackupService(connRepo, "./backups", toolPaths, backupRepo)
 	backupHandler := backup.NewBackupHandler(backupService)
 
-	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST")
-	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET")
-	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET")
-	protected.HandleFunc("/backups/schedule", backupHandler.ScheduleBackup).Methods("POST")
-	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST")
-	protected.HandleFunc("/backups/{connection_id}/schedule", backupHandler.UpdateBackupSchedule).Methods("PUT")
+	protected.HandleFunc("/backups", backupHandler.CreateBackup).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/backups", backupHandler.ListBackups).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/backups/schedule", backupHandler.ScheduleBackup).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/backups/{connection_id}/schedule", backupHandler.UpdateBackupSchedule).Methods("PUT", "OPTIONS")
 
 	// Start server
 	log.Println("Server starting on :8080")
