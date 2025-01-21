@@ -20,7 +20,6 @@ export default function Home() {
                 Monitor and manage your database backups
               </p>
             </div>
-            {/* <AddBackupDialog /> */}
           </div>
 
           <div className="space-y-6">
