@@ -1,6 +1,7 @@
 package backup
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"os/exec"
@@ -253,6 +254,12 @@ func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, ou
 }
 
 func (s *BackupService) ScheduleBackup(req *ScheduleBackupRequest) error {
+	// First check if a schedule already exists for this connection
+	existingSchedule, err := s.backupRepo.GetBackupSchedule(req.ConnectionID)
+	if err != nil && err != sql.ErrNoRows {
+		return fmt.Errorf("failed to check existing schedule: %v", err)
+	}
+
 	parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	schedule, err := parser.Parse(req.CronSchedule)
 	if err != nil {
@@ -261,6 +268,36 @@ func (s *BackupService) ScheduleBackup(req *ScheduleBackupRequest) error {
 
 	nextRun := schedule.Next(time.Now())
 
+	if existingSchedule != nil {
+		// Update existing schedule
+		existingSchedule.Enabled = true
+		existingSchedule.CronSchedule = req.CronSchedule
+		existingSchedule.RetentionDays = req.RetentionDays
+		existingSchedule.NextRunTime = &nextRun
+		existingSchedule.UpdatedAt = time.Now()
+
+		if err := s.backupRepo.UpdateBackupSchedule(existingSchedule); err != nil {
+			return fmt.Errorf("failed to update backup schedule: %v", err)
+		}
+
+		// Update cron job
+		scheduleID := existingSchedule.ID.String()
+		if oldEntryID, exists := s.cronEntries[scheduleID]; exists {
+			s.cronManager.Remove(oldEntryID)
+		}
+
+		entryID, err := s.cronManager.AddFunc(req.CronSchedule, func() {
+			s.executeCronBackup(existingSchedule)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to schedule backup: %v", err)
+		}
+
+		s.cronEntries[scheduleID] = entryID
+		return nil
+	}
+
+	// Create new schedule if none exists
 	backupSchedule := &BackupSchedule{
 		ID:            uuid.New(),
 		ConnectionID:  req.ConnectionID,
