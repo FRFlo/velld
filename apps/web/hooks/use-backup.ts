@@ -50,9 +50,8 @@ export function useBackup() {
       await scheduleBackup(params);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['backups'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['backups']});
+      queryClient.invalidateQueries({ queryKey: ['connections']});
       toast({
         title: "Success",
         description: "Backup schedule created successfully",
@@ -72,9 +71,8 @@ export function useBackup() {
       await updateSchedule(connectionId, params);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['backups'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['backups']});
+      queryClient.invalidateQueries({ queryKey: ['connections']});
       toast({
         title: "Success",
         description: "Backup schedule updated successfully",
@@ -96,6 +94,9 @@ export function useBackup() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['backups'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['connections'],
       });
       toast({
         title: "Success",

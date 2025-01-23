@@ -137,11 +137,15 @@ func (r *ConnectionRepository) ListByUserID(userID uuid.UUID) ([]ConnectionListI
 			c.id,
 			c.name,
 			c.type,
+			c.host,
+			c.status,
 			c.database_size,
 			b.completed_time as last_backup_time,
-			COALESCE(bs.enabled, false) as backup_enabled
+			COALESCE(bs.enabled, false) as backup_enabled,
+			bs.cron_schedule,
+			bs.retention_days
 		FROM connections c
-		LEFT JOIN backup_schedules bs ON c.id = bs.connection_id
+		LEFT JOIN backup_schedules bs ON c.id = bs.connection_id AND bs.enabled = true
 		LEFT JOIN backups b ON c.id = b.connection_id
 			AND b.completed_time = (
 				SELECT MAX(completed_time)
@@ -149,7 +153,7 @@ func (r *ConnectionRepository) ListByUserID(userID uuid.UUID) ([]ConnectionListI
 				WHERE connection_id = c.id
 			)
 		WHERE c.user_id = $1
-		GROUP BY c.id, c.name, c.type, c.database_size, b.completed_time, bs.enabled
+		GROUP BY c.id, c.name, c.type, c.host, c.status, c.database_size, b.completed_time, bs.enabled, bs.cron_schedule, bs.retention_days
 	`
 
 	rows, err := r.db.Query(query, userID)
@@ -162,14 +166,20 @@ func (r *ConnectionRepository) ListByUserID(userID uuid.UUID) ([]ConnectionListI
 	for rows.Next() {
 		var conn ConnectionListItem
 		var lastBackupTime sql.NullString
+		var cronSchedule sql.NullString
+		var retentionDays sql.NullInt64
 
 		err := rows.Scan(
 			&conn.ID,
 			&conn.Name,
 			&conn.Type,
+			&conn.Host,
+			&conn.Status,
 			&conn.DatabaseSize,
 			&lastBackupTime,
 			&conn.BackupEnabled,
+			&cronSchedule,
+			&retentionDays,
 		)
 		if err != nil {
 			return nil, err
@@ -177,6 +187,13 @@ func (r *ConnectionRepository) ListByUserID(userID uuid.UUID) ([]ConnectionListI
 
 		if lastBackupTime.Valid {
 			conn.LastBackupTime = &lastBackupTime.String
+		}
+		if cronSchedule.Valid {
+			conn.CronSchedule = &cronSchedule.String
+		}
+		if retentionDays.Valid {
+			days := int(retentionDays.Int64)
+			conn.RetentionDays = &days
 		}
 
 		connections = append(connections, conn)

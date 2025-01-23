@@ -30,3 +30,14 @@ export function calculateDuration(start: string, end: string) {
   const seconds = Math.floor((durationMs % 60000) / 1000);
   return `${minutes}m ${seconds}s`;
 }
+
+export const getScheduleFrequency = (cronSchedule: string | undefined) => {
+    if (!cronSchedule) return '';
+    switch (cronSchedule) {
+        case '0 0 * * * *': return 'hourly';
+        case '0 0 0 * * *': return 'daily';
+        case '0 0 0 * * 0': return 'weekly';
+        case '0 0 0 1 * *': return 'monthly';
+        default: return 'custom';
+    }
+};

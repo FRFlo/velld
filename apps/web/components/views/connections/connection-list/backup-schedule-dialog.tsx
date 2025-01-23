@@ -19,6 +19,7 @@ import {
 import type { Connection } from '@/types/connection';
 import { useBackup } from '@/hooks/use-backup';
 import { useState, useEffect } from 'react';
+import { getScheduleFrequency } from '@/lib/helper';
 
 const CRON_SCHEDULES = {
   'hourly': '0 0 * * * *',
@@ -37,22 +38,32 @@ const RETENTION_DAYS = {
 interface BackupScheduleDialogProps {
   connectionId: string | null;
   connection?: Connection;
-  isEnabled?: boolean;
   onClose: () => void;
 }
 
 export function BackupScheduleDialog({
   connectionId,
   connection,
-  isEnabled,
   onClose,
 }: BackupScheduleDialogProps) {
   const { createSchedule, updateExistingSchedule, disableSchedule, isScheduling, isDisabling, isUpdating } = useBackup();
-  const [enabled, setEnabled] = useState(isEnabled);
+  const [enabled, setEnabled] = useState(false);
+
+  const getRetentionFromDays = (days?: number | null) => {
+    if (!days) return '30';
+    return days.toString();
+  };
+
+  const [schedule, setSchedule] = useState(getScheduleFrequency(connection?.cron_schedule) || 'daily');
+  const [retention, setRetention] = useState(getRetentionFromDays(connection?.retention_days));
 
   useEffect(() => {
-    setEnabled(isEnabled);
-  }, [isEnabled]);
+    if (connection) {
+      setEnabled(connection.backup_enabled);
+      setSchedule(getScheduleFrequency(connection.cron_schedule) || 'daily');
+      setRetention(getRetentionFromDays(connection.retention_days));
+    }
+  }, [connection]);
 
   if (!connectionId || !connection) return null;
 
@@ -61,8 +72,8 @@ export function BackupScheduleDialog({
       if (checked) {
         await createSchedule({
           connection_id: connectionId,
-          cron_schedule: CRON_SCHEDULES['daily'],
-          retention_days: RETENTION_DAYS['30']
+          cron_schedule: CRON_SCHEDULES[schedule as keyof typeof CRON_SCHEDULES],
+          retention_days: RETENTION_DAYS[retention as keyof typeof RETENTION_DAYS]
         });
         setEnabled(true);
       } else {
@@ -76,26 +87,28 @@ export function BackupScheduleDialog({
     }
   };
 
-  const handleScheduleSubmit = async (schedule: string, retention: string) => {
+  const handleScheduleSubmit = async (newSchedule: string, newRetention: string) => {
     try {
       if (enabled) {
         // Update existing schedule
         await updateExistingSchedule({
           connectionId,
           params: {
-            cron_schedule: CRON_SCHEDULES[schedule as keyof typeof CRON_SCHEDULES],
-            retention_days: RETENTION_DAYS[retention as keyof typeof RETENTION_DAYS]
+            cron_schedule: CRON_SCHEDULES[newSchedule as keyof typeof CRON_SCHEDULES],
+            retention_days: RETENTION_DAYS[newRetention as keyof typeof RETENTION_DAYS]
           }
         });
       } else {
         // Create new schedule
         await createSchedule({
           connection_id: connectionId,
-          cron_schedule: CRON_SCHEDULES[schedule as keyof typeof CRON_SCHEDULES],
-          retention_days: RETENTION_DAYS[retention as keyof typeof RETENTION_DAYS]
+          cron_schedule: CRON_SCHEDULES[newSchedule as keyof typeof CRON_SCHEDULES],
+          retention_days: RETENTION_DAYS[newRetention as keyof typeof RETENTION_DAYS]
         });
         setEnabled(true);
       }
+      setSchedule(newSchedule);
+      setRetention(newRetention);
     } catch (error) {
       console.error('Failed to update schedule:', error);
     }
@@ -130,8 +143,8 @@ export function BackupScheduleDialog({
                   Backup Frequency
                 </Label>
                 <Select
-                  defaultValue="daily"
-                  onValueChange={(value) => handleScheduleSubmit(value, '30')}
+                  value={schedule}
+                  onValueChange={(value) => handleScheduleSubmit(value, retention)}
                   disabled={isScheduling}
                 >
                   <SelectTrigger>
@@ -152,8 +165,8 @@ export function BackupScheduleDialog({
                   Retention Period
                 </Label>
                 <Select
-                  defaultValue="30"
-                  onValueChange={(value) => handleScheduleSubmit('daily', value)}
+                  value={retention}
+                  onValueChange={(value) => handleScheduleSubmit(schedule, value)}
                   disabled={isScheduling}
                 >
                   <SelectTrigger>

@@ -50,7 +50,11 @@ type ConnectionListItem struct {
 	ID             string  `json:"id"`
 	Name           string  `json:"name"`
 	Type           string  `json:"type"`
+	Host           string  `json:"host"`
+	Status         string  `json:"status"`
 	DatabaseSize   int64   `json:"database_size"`
 	LastBackupTime *string `json:"last_backup_time"`
 	BackupEnabled  bool    `json:"backup_enabled"`
+	CronSchedule   *string `json:"cron_schedule"`
+	RetentionDays  *int    `json:"retention_days"`
 }
