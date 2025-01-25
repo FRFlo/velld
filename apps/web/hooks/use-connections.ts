@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { saveConnection, testConnection, getConnections, getConnectionStats } from '@/lib/api/connections';
+import { saveConnection, testConnection, getConnections } from '@/lib/api/connections';
 import { BaseConnection } from '@/types/connection';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,9 +21,6 @@ export function useConnections() {
       queryClient.invalidateQueries({ 
         queryKey: ['connections']
       });
-      queryClient.invalidateQueries({ 
-        queryKey: ['connection-stats']
-      });
       toast({
         title: "Success",
         description: "Connection added successfully",
@@ -38,16 +35,10 @@ export function useConnections() {
     },
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ['connection-stats'],
-    queryFn: getConnectionStats,
-  });
-
   return {
     connections,
     isLoading,
     addConnection,
-    isAdding,
-    stats,
+    isAdding
   };
 }
