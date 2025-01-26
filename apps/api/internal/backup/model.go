@@ -63,6 +63,7 @@ type ScheduleBackupRequest struct {
 // BackupStats represents backup statistics
 type BackupStats struct {
 	TotalBackups    int     `json:"total_backups"`
+	FailedBackups   int     `json:"failed_backups"`
 	TotalSize       int64   `json:"total_size"`
 	AverageSize     int64   `json:"average_size"`
 	AverageDuration float64 `json:"average_duration"`

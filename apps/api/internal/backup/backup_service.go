@@ -428,3 +428,7 @@ func (s *BackupService) UpdateBackupSchedule(connectionID string, req *UpdateSch
 
 	return nil
 }
+
+func (s *BackupService) GetBackupStats(userID uuid.UUID) (*BackupStats, error) {
+	return s.backupRepo.GetBackupStats(userID)
+}

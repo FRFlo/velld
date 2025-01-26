@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dendianugerah/velld/internal/common"
+	"github.com/google/uuid"
 )
 
 type BackupRepository struct {
@@ -391,4 +392,92 @@ func (r *BackupRepository) UpdateBackupStatusAndSchedule(id string, status strin
 		WHERE id = $4`,
 		status, scheduleID, time.Now().Format(time.RFC3339), id)
 	return err
+}
+
+func (r *BackupRepository) GetBackupStats(userID uuid.UUID) (*BackupStats, error) {
+	stats := &BackupStats{}
+
+	// Get total backups, failed backups, and total size for all user's connections
+	err := r.db.QueryRow(`
+		SELECT 
+			COUNT(*) as total_backups,
+			SUM(CASE WHEN b.status != 'completed' THEN 1 ELSE 0 END) as failed_backups,
+			COALESCE(SUM(b.size), 0) as total_size
+		FROM backups b
+		INNER JOIN connections c ON b.connection_id = c.id
+		WHERE c.user_id = $1
+	`, userID).Scan(&stats.TotalBackups, &stats.FailedBackups, &stats.TotalSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get backup counts: %v", err)
+	}
+
+	// Calculate success rate
+	if stats.TotalBackups > 0 {
+		successfulBackups := stats.TotalBackups - stats.FailedBackups
+		stats.SuccessRate = float64(successfulBackups) / float64(stats.TotalBackups) * 100
+	}
+
+	// Calculate average duration for completed backups
+	var totalDuration float64
+	var completedBackups int
+	rows, err := r.db.Query(`
+		SELECT 
+			b.started_time,
+			b.completed_time
+		FROM backups b
+		INNER JOIN connections c ON b.connection_id = c.id
+		WHERE c.user_id = $1 
+		AND b.status = 'completed'
+		AND b.completed_time IS NOT NULL
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get backup durations: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var startStr, endStr string
+		if err := rows.Scan(&startStr, &endStr); err != nil {
+			continue
+		}
+
+		startTime, err := common.ParseTime(startStr)
+		if err != nil {
+			continue
+		}
+
+		endTime, err := common.ParseTime(endStr)
+		if err != nil {
+			continue
+		}
+
+		duration := endTime.Sub(startTime).Minutes()
+		totalDuration += duration
+		completedBackups++
+	}
+
+	if completedBackups > 0 {
+		stats.AverageDuration = totalDuration / float64(completedBackups)
+	}
+
+	// Get last backup time
+	var lastBackupTime sql.NullString
+	err = r.db.QueryRow(`
+		SELECT b.completed_time 
+		FROM backups b
+		INNER JOIN connections c ON b.connection_id = c.id
+		WHERE c.user_id = $1 
+		AND b.status = 'completed' 
+		ORDER BY b.completed_time DESC 
+		LIMIT 1
+	`, userID).Scan(&lastBackupTime)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to get last backup time: %v", err)
+	}
+
+	if lastBackupTime.Valid {
+		stats.LastBackupTime = lastBackupTime.String
+	}
+
+	return stats, nil
 }

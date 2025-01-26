@@ -179,3 +179,26 @@ func (h *BackupHandler) UpdateBackupSchedule(w http.ResponseWriter, r *http.Requ
 
 	response.SendSuccess(w, "Backup schedule updated successfully", nil)
 }
+
+func (h *BackupHandler) GetBackupStats(w http.ResponseWriter, r *http.Request) {
+	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
+	if !ok {
+		response.SendError(w, http.StatusBadRequest, "Invalid user claims")
+		return
+	}
+
+	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		response.SendError(w, http.StatusBadRequest, "Invalid user ID")
+		return
+	}
+
+	stats, err := h.backupService.GetBackupStats(userID)
+	if err != nil {
+		response.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response.SendSuccess(w, "Backup statistics retrieved successfully", stats)
+}
