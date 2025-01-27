@@ -207,36 +207,6 @@ func (r *ConnectionRepository) UpdateLastConnected(id string) error {
 	return err
 }
 
-func (r *ConnectionRepository) GetStatsByUserID(userID uuid.UUID) (*ConnectionStats, error) {
-	stats := &ConnectionStats{}
-
-	err := r.db.QueryRow(`
-		SELECT 
-			COUNT(*) as total_connections,
-			COALESCE(SUM(database_size), 0) as total_size,
-			COALESCE(AVG(NULLIF(database_size, 0)), 0) as average_size,
-			COUNT(CASE WHEN status = 'connected' THEN 1 END) as active_count,
-			COUNT(CASE WHEN status = 'disconnected' THEN 1 END) as inactive_count,
-			COUNT(CASE WHEN ssl = true THEN 1 END) as ssl_count,
-			(COUNT(CASE WHEN ssl = true THEN 1 END) / COUNT(*)) * 100 as ssl_percentage
-		FROM connections 
-		WHERE user_id = $1
-	`, userID).Scan(
-		&stats.TotalConnections,
-		&stats.TotalSize,
-		&stats.AverageSize,
-		&stats.ActiveCount,
-		&stats.InactiveCount,
-		&stats.SSLCount,
-		&stats.SSLPercentage,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return stats, nil
-}
-
 func (r *ConnectionRepository) UpdateStatus(id string, status string) error {
 	query := `UPDATE connections SET status = $1, updated_at = NOW() WHERE id = $2`
 	_, err := r.db.Exec(query, status, id)

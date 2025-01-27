@@ -66,10 +66,6 @@ func (s *ConnectionService) ListConnections(userID uuid.UUID) ([]ConnectionListI
 	return s.repo.ListByUserID(userID)
 }
 
-func (s *ConnectionService) GetConnectionStats(userID uuid.UUID) (*ConnectionStats, error) {
-	return s.repo.GetStatsByUserID(userID)
-}
-
 func (s *ConnectionService) UpdateConnection(config ConnectionConfig, userID uuid.UUID) (*StoredConnection, error) {
 	if err := s.manager.Connect(config); err != nil {
 		return nil, err
