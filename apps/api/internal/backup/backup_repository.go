@@ -460,24 +460,5 @@ func (r *BackupRepository) GetBackupStats(userID uuid.UUID) (*BackupStats, error
 		stats.AverageDuration = totalDuration / float64(completedBackups)
 	}
 
-	// Get last backup time
-	var lastBackupTime sql.NullString
-	err = r.db.QueryRow(`
-		SELECT b.completed_time 
-		FROM backups b
-		INNER JOIN connections c ON b.connection_id = c.id
-		WHERE c.user_id = $1 
-		AND b.status = 'completed' 
-		ORDER BY b.completed_time DESC 
-		LIMIT 1
-	`, userID).Scan(&lastBackupTime)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("failed to get last backup time: %v", err)
-	}
-
-	if lastBackupTime.Valid {
-		stats.LastBackupTime = lastBackupTime.String
-	}
-
 	return stats, nil
 }

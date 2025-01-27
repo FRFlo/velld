@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBackups, saveBackup, scheduleBackup, disableBackupSchedule, updateSchedule } from "@/lib/api/backups";
+import { getBackups, saveBackup, scheduleBackup, disableBackupSchedule, updateSchedule, getBackupStats } from "@/lib/api/backups";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 
@@ -21,6 +21,11 @@ export function useBackup() {
     queryKey: ['backups', { page, limit, search }],
     queryFn: () => getBackups({ page, limit, search }),
     placeholderData: (previousData) => previousData,
+  });
+
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['backup-stats'],
+    queryFn: () => getBackupStats(),
   });
 
   const { mutate: createBackup, isPending: isCreating } = useMutation({
@@ -129,5 +134,7 @@ export function useBackup() {
     setPage,
     search,
     setSearch,
+    stats,
+    isLoadingStats,
   };
 }

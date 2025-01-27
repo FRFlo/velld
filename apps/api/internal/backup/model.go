@@ -65,10 +65,8 @@ type BackupStats struct {
 	TotalBackups    int     `json:"total_backups"`
 	FailedBackups   int     `json:"failed_backups"`
 	TotalSize       int64   `json:"total_size"`
-	AverageSize     int64   `json:"average_size"`
 	AverageDuration float64 `json:"average_duration"`
 	SuccessRate     float64 `json:"success_rate"`
-	LastBackupTime  string  `json:"last_backup_time"`
 }
 
 // PaginatedBackupResponse represents a paginated response of backups
