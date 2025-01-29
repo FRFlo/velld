@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { ConnectionListHeader } from './connection-list/header';
 import { ConnectionCard } from './connection-list/connection-card';
 import { BackupScheduleDialog } from './connection-list/backup-schedule-dialog';
-import type { SortBy } from './connection-list/types';
+import { SortBy } from '@/types/connection';
 
 export function ConnectionsList() {
   const { connections, isLoading } = useConnections();

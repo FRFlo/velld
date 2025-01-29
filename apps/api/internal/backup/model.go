@@ -38,6 +38,7 @@ type BackupList struct {
 	ID            uuid.UUID `json:"id"`
 	ConnectionID  string    `json:"connection_id"`
 	DatabaseType  string    `json:"database_type"`
+	DatabaseName  string    `json:"database_name"`
 	ScheduleID    *string   `json:"schedule_id"`
 	Status        string    `json:"status"`
 	Path          string    `json:"path"`

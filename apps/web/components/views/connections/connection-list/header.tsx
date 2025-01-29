@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import type { SortBy } from './types';
+import { SortBy } from '@/types/connection';
 
 interface ConnectionListHeaderProps {
   searchQuery: string;

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { BaseConnection } from '@/types/connection';
+import { ConnectionForm as ConnectionFormType } from '@/types/connection';
 import { useConnections } from "@/hooks/use-connections";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DatabaseType } from '@/types/base';
 
 interface ConnectionFormProps {
   onSuccess?: () => void;
@@ -14,9 +15,9 @@ interface ConnectionFormProps {
 }
 
 export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
-  const [formData, setFormData] = useState<BaseConnection>({
+  const [formData, setFormData] = useState<ConnectionFormType>({
     name: "",
-    type: "" as BaseConnection['type'],
+    type: "" as DatabaseType,
     host: "",
     port: 0,
     username: "",
@@ -50,7 +51,7 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
         <Label htmlFor="type">Database Type</Label>
         <Select
           value={formData.type}
-          onValueChange={(value) => setFormData({ ...formData, type: value as BaseConnection['type'] })}
+          onValueChange={(value) => setFormData({ ...formData, type: value as DatabaseType })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select a database" />
@@ -60,7 +61,7 @@ export function ConnectionForm({ onSuccess, onCancel }: ConnectionFormProps) {
             <SelectItem value="mysql">MySQL</SelectItem>
             <SelectSeparator />
             <SelectItem value="mongodb">MongoDB</SelectItem>
-        </SelectContent>
+          </SelectContent>
         </Select>
       </div>
 

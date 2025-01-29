@@ -340,7 +340,8 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 	query := fmt.Sprintf(`
 		SELECT 
 			b.id, b.connection_id, c.type, b.schedule_id, b.status, b.path, b.size,
-			b.started_time, b.completed_time, b.created_at, b.updated_at
+			b.started_time, b.completed_time, b.created_at, b.updated_at,
+			c.database_name
 		FROM backups b
 		INNER JOIN connections c ON b.connection_id = c.id
 		%s
@@ -369,6 +370,7 @@ func (r *BackupRepository) GetAllBackupsWithPagination(opts BackupListOptions) (
 			&backup.ScheduleID, &backup.Status, &backup.Path, &backup.Size,
 			&startedTimeStr, &completedTimeStr,
 			&createdAtStr, &updatedAtStr,
+			&backup.DatabaseName,
 		)
 		if err != nil {
 			return nil, 0, err

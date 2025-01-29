@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Database, Clock, Settings2, Play, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Connection } from '@/types/connection';
-import { statusColors, typeLabels } from './types';
+import { statusColors, typeLabels } from '@/types/base';
 import { useBackup } from '@/hooks/use-backup';
 
 interface ConnectionCardProps {

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveConnection, testConnection, getConnections } from '@/lib/api/connections';
-import { BaseConnection } from '@/types/connection';
+import { ConnectionForm } from '@/types/connection';
 import { useToast } from '@/hooks/use-toast';
 
 export function useConnections() {
@@ -13,7 +13,7 @@ export function useConnections() {
   });
 
   const { mutate: addConnection, isPending: isAdding } = useMutation({
-    mutationFn: async (connection: BaseConnection) => {
+    mutationFn: async (connection: ConnectionForm) => {
       await testConnection(connection);
       await saveConnection(connection);
     },

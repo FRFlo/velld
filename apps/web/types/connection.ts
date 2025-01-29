@@ -1,27 +1,41 @@
-export interface BaseConnection {
+import { Base, DatabaseType, StatusColor } from "./base";
+
+export interface Connection {
+  id: string;
   name: string;
-  type: 'mysql' | 'postgresql' | 'mongodb';
+  type: DatabaseType;
   host: string;
   port: number;
   username: string;
   password: string;
   database: string;
-  ssl: boolean;
-}
-
-export interface Connection extends BaseConnection {
-  id: string;
-  status: 'connected' | 'disconnected';
-  last_connected_at: string;
   database_size: number;
-  last_backup_time: string;
+  ssl: boolean;
+  status: StatusColor;
+  last_backup_time?: string;
   backup_enabled: boolean;
   cron_schedule?: string;
   retention_days?: number;
 }
 
-export interface ConnectionStatus {
-  isConnected: boolean;
-  lastSync: string;
-  error?: string;
+export type ConnectionForm = Pick<Connection, 
+  | "name" 
+  | "type" 
+  | "host" 
+  | "port" 
+  | "username" 
+  | "password" 
+  | "database" 
+  | "ssl"
+>;
+
+export type ConnectionListResponse = Base<Connection[]>;
+
+export type SortBy = 'name' | 'status' | 'type' | 'lastBackup';
+
+export interface BackupConfig {
+  enabled: boolean;
+  schedule: string;
+  retention: string;
+  lastBackup?: string;
 }
