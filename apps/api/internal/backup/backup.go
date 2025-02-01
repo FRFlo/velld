@@ -3,13 +3,11 @@ package backup
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/common/response"
-	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -57,14 +55,7 @@ func (h *BackupHandler) GetBackup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BackupHandler) ListBackups(w http.ResponseWriter, r *http.Request) {
-	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
-	if !ok {
-		response.SendError(w, http.StatusBadRequest, "Invalid user claims")
-		return
-	}
-
-	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := common.GetUserIDFromContext(r.Context())
 	if err != nil {
 		response.SendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -181,16 +172,9 @@ func (h *BackupHandler) UpdateBackupSchedule(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *BackupHandler) GetBackupStats(w http.ResponseWriter, r *http.Request) {
-	userClaims, ok := r.Context().Value("user").(jwt.MapClaims)
-	if !ok {
-		response.SendError(w, http.StatusBadRequest, "Invalid user claims")
-		return
-	}
-
-	userIDStr := fmt.Sprintf("%v", userClaims["user_id"])
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := common.GetUserIDFromContext(r.Context())
 	if err != nil {
-		response.SendError(w, http.StatusBadRequest, "Invalid user ID")
+		response.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
