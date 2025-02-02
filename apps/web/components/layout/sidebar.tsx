@@ -11,7 +11,7 @@ import { useState } from "react";
 const navigation = [
   { name: "Dashboard", href: "/", icon: Layout },
   { name: "Connections", href: "/connections", icon: Server },
-  { name: "Backup History", href: "/history", icon: History },
+  { name: "History", href: "/history", icon: History },
   // { name: "Security", href: "/security", icon: Shield },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

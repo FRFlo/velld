@@ -3,10 +3,11 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Database, Download, FileDown, MoreVertical } from "lucide-react";
+import { Database, Download, MoreVertical } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { useBackup } from "@/hooks/use-backup";
 import { BackupList } from "@/types/backup";
+import { statusColors } from "@/types/base";
 import { HistoryListSkeleton } from "@/components/ui/skeleton/history-list";
 import { calculateDuration, formatSize } from "@/lib/helper";
 import { HistoryFilters } from "./history-filters";
@@ -46,12 +47,6 @@ const notifications = [
   },
 ];
 
-const statusColors = {
-  completed: "bg-emerald-500/15 text-emerald-500",
-  failed: "bg-red-500/15 text-red-500",
-  running: "bg-blue-500/15 text-blue-500",
-};
-
 export function HistoryList() {
   const { backups, isLoading, pagination, page, setPage } = useBackup();
   const totalPages = pagination?.total_pages || 1;
@@ -62,10 +57,6 @@ export function HistoryList() {
         <div className="p-6 pb-0">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold">Recent Backups</h3>
-            <Button variant="outline" size="sm">
-              <FileDown className="h-4 w-4 mr-2" />
-              Export Log
-            </Button>
           </div>
           <HistoryFilters />
         </div>
