@@ -51,7 +51,7 @@ export function ProfileSettings() {
             <p className="text-sm text-muted-foreground">Change your account password</p>
           </div>
         </div>
-        <Button variant="outline" size="sm">Change Password</Button>
+        <Button variant="outline" size="sm" disabled>Change Password</Button>
       </div>
     </Card>
   );

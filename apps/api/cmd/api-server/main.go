@@ -12,6 +12,7 @@ import (
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/dendianugerah/velld/internal/database"
 	"github.com/dendianugerah/velld/internal/middleware"
+	"github.com/dendianugerah/velld/internal/settings"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -103,6 +104,13 @@ func main() {
 	protected.HandleFunc("/backups/{id}", backupHandler.GetBackup).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/backups/{connection_id}/schedule", backupHandler.UpdateBackupSchedule).Methods("PUT", "OPTIONS")
+
+	settingsRepo := settings.NewSettingsRepository(db)
+	settingsService := settings.NewSettingsService(settingsRepo, cryptoService)
+	settingsHandler := settings.NewSettingsHandler(settingsService)
+
+	protected.HandleFunc("/settings", settingsHandler.GetSettings).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/settings", settingsHandler.UpdateSettings).Methods("PUT", "OPTIONS")
 
 	// Start server
 	log.Println("Server starting on :8080")
