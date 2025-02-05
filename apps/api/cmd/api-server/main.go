@@ -12,6 +12,7 @@ import (
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/dendianugerah/velld/internal/database"
 	"github.com/dendianugerah/velld/internal/middleware"
+	"github.com/dendianugerah/velld/internal/notification"
 	"github.com/dendianugerah/velld/internal/settings"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -94,7 +95,19 @@ func main() {
 	}
 
 	backupRepo := backup.NewBackupRepository(db)
-	backupService := backup.NewBackupService(connRepo, "./backups", toolPaths, backupRepo)
+	settingsRepo := settings.NewSettingsRepository(db)
+	notificationRepo := notification.NewNotificationRepository(db)
+
+	backupService := backup.NewBackupService(
+		connRepo,
+		"./backups",
+		toolPaths,
+		backupRepo,
+		settingsRepo,
+		notificationRepo,
+		cryptoService,
+	)
+
 	backupHandler := backup.NewBackupHandler(backupService)
 
 	protected.HandleFunc("/backups/stats", backupHandler.GetBackupStats).Methods("GET", "OPTIONS")
@@ -105,7 +118,6 @@ func main() {
 	protected.HandleFunc("/backups/{connection_id}/schedule/disable", backupHandler.DisableBackupSchedule).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/backups/{connection_id}/schedule", backupHandler.UpdateBackupSchedule).Methods("PUT", "OPTIONS")
 
-	settingsRepo := settings.NewSettingsRepository(db)
 	settingsService := settings.NewSettingsService(settingsRepo, cryptoService)
 	settingsHandler := settings.NewSettingsHandler(settingsService)
 
