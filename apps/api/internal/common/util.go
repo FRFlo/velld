@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -41,4 +42,33 @@ func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	}
 
 	return userID, nil
+}
+
+var DefaultBinaryPaths = map[string]map[string]string{
+	"windows": {
+		"postgresql": "C:\\Program Files\\PostgreSQL\\16\\bin",
+		"mysql":      "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin",
+		"mariadb":    "C:\\Program Files\\MariaDB 10.6\\bin",
+		"mongodb":    "C:\\Program Files\\MongoDB\\Server\\6.0\\bin",
+	},
+	"linux": {
+		"postgresql": "/usr/bin",
+		"mysql":      "/usr/bin",
+		"mariadb":    "/usr/bin",
+		"mongodb":    "/usr/bin",
+	},
+	"darwin": {
+		"postgresql": "/opt/homebrew/bin",
+		"mysql":      "/opt/homebrew/bin",
+		"mariadb":    "/opt/homebrew/bin",
+		"mongodb":    "/opt/homebrew/bin",
+	},
+}
+
+
+func GetDefaultBinaryPath(dbType string) string {
+	if paths, ok := DefaultBinaryPaths[runtime.GOOS]; ok {
+		return paths[dbType]
+	}
+	return ""
 }

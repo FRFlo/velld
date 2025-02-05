@@ -86,12 +86,11 @@ func main() {
 	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT", "OPTIONS")
 
-	// Configure backup tool paths from environment
 	toolPaths := map[string]string{
-		"postgresql": os.Getenv("POSTGRESQL_BIN_PATH"),
-		"mysql":      os.Getenv("MYSQL_BIN_PATH"),
-		"mariadb":    os.Getenv("MARIADB_BIN_PATH"),
-		"mongodb":    os.Getenv("MONGODB_BIN_PATH"),
+		"postgresql": common.GetDefaultBinaryPath("postgresql"),
+		"mysql":      common.GetDefaultBinaryPath("mysql"),
+		"mariadb":    common.GetDefaultBinaryPath("mariadb"),
+		"mongodb":    common.GetDefaultBinaryPath("mongodb"),
 	}
 
 	backupRepo := backup.NewBackupRepository(db)
