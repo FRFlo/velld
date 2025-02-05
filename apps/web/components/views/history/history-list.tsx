@@ -11,16 +11,9 @@ import { statusColors } from "@/types/base";
 import { HistoryListSkeleton } from "@/components/ui/skeleton/history-list";
 import { calculateDuration, formatSize } from "@/lib/helper";
 import { HistoryFilters } from "./history-filters";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell } from "lucide-react";
+import { CustomPagination } from "@/components/ui/custom-pagination";
 
 // Sample notification data
 const notifications = [
@@ -152,46 +145,11 @@ export function HistoryList() {
 
         {pagination && (
           <div className="p-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page > 1) setPage(page - 1);
-                    }}
-                    className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink
-                      href="#"
-                      isActive={pageNum === page}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPage(pageNum);
-                      }}
-                    >
-                      {pageNum}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-
-                <PaginationItem>
-                  <PaginationNext 
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (page < totalPages) setPage(page + 1);
-                    }}
-                    className={page >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <CustomPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
         )}
       </div>
