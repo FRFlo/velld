@@ -41,7 +41,7 @@ const notifications = [
 ];
 
 export function HistoryList() {
-  const { backups, isLoading, pagination, page, setPage } = useBackup();
+  const { backups, isLoading, pagination, page, setPage, downloadBackupFile, isDownloading } = useBackup();
   const totalPages = pagination?.total_pages || 1;
 
   return (
@@ -93,7 +93,12 @@ export function HistoryList() {
                         </p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => downloadBackupFile({ id: item.id, path: item.path })}
+                          disabled={isDownloading}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon">

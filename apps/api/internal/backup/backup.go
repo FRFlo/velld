@@ -3,7 +3,10 @@ package backup
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/dendianugerah/velld/internal/common"
@@ -185,4 +188,36 @@ func (h *BackupHandler) GetBackupStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendSuccess(w, "Backup statistics retrieved successfully", stats)
+}
+
+func (h *BackupHandler) DownloadBackup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	backupID := vars["id"]
+
+	backup, err := h.backupService.GetBackup(backupID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			response.SendError(w, http.StatusNotFound, "Backup not found")
+			return
+		}
+		response.SendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	file, err := os.Open(backup.Path)
+	if err != nil {
+		response.SendError(w, http.StatusInternalServerError, "Failed to open backup file")
+		return
+	}
+	defer file.Close()
+
+	filename := filepath.Base(backup.Path)
+	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	_, err = io.Copy(w, file)
+	if err != nil {
+		response.SendError(w, http.StatusInternalServerError, "Failed to send file")
+		return
+	}
 }

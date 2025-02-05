@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBackups, saveBackup, scheduleBackup, disableBackupSchedule, updateSchedule, getBackupStats } from "@/lib/api/backups";
+import { getBackups, saveBackup, scheduleBackup, disableBackupSchedule, updateSchedule, getBackupStats, downloadBackup } from "@/lib/api/backups";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from 'react';
 
@@ -117,6 +117,29 @@ export function useBackup() {
     },
   });
 
+  const { mutate: downloadBackupFile, isPending: isDownloading } = useMutation({
+    mutationFn: async (backup: { id: string, path: string }) => {
+      const blob = await downloadBackup(backup.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const filename = backup.path.split('\\').pop() || `backup-${backup.id}.sql`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download backup",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     createBackup,
     isCreating,
@@ -126,6 +149,8 @@ export function useBackup() {
     isUpdating,
     disableSchedule,
     isDisabling,
+    downloadBackupFile,
+    isDownloading,
     backups: data?.data,
     pagination: data?.pagination,
     isLoading,

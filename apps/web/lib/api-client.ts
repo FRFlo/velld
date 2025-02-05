@@ -7,9 +7,13 @@ export class ApiError extends Error {
   }
 }
 
+interface ExtendedRequestInit extends RequestInit {
+  responseType?: 'json' | 'blob';
+}
+
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ExtendedRequestInit = {}
 ): Promise<T> {
   const token = localStorage.getItem('token');
   const headers = {
@@ -32,5 +36,5 @@ export async function apiRequest<T>(
     throw new ApiError(response.status, error || `HTTP error! status: ${response.status}`);
   }
 
-  return response.json();
+  return options.responseType === 'blob' ? response.blob() : response.json();
 }

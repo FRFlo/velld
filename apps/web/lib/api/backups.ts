@@ -29,6 +29,14 @@ export async function getBackups(params?: GetBackupsParams): Promise<BackupListR
     method: 'GET',
   });
 }
+
+export async function downloadBackup(backupId: string): Promise<Blob> {
+  return apiRequest<Blob>(`/api/backups/${backupId}/download`, {
+    method: 'GET',
+    responseType: 'blob',
+  });
+}
+
 export interface ScheduleBackupParams {
   connection_id: string;
   cron_schedule: string;
