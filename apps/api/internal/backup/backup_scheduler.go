@@ -83,15 +83,6 @@ func (s *BackupService) ScheduleBackup(req *ScheduleBackupRequest) error {
 }
 
 func (s *BackupService) executeCronBackup(schedule *BackupSchedule) {
-	// Add test failure for 5-minute schedule
-	if schedule.CronSchedule == "0 */1 * * * *" {
-		err := fmt.Errorf("test failure: this is a simulated backup failure for SMTP testing")
-		if notifyErr := s.createFailureNotification(schedule.ConnectionID, err); notifyErr != nil {
-			fmt.Printf("Error creating failure notification: %v\n", notifyErr)
-		}
-		return
-	}
-
 	backup, err := s.CreateBackup(schedule.ConnectionID)
 	if err != nil {
 		if notifyErr := s.createFailureNotification(schedule.ConnectionID, err); notifyErr != nil {
