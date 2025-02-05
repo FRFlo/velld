@@ -7,6 +7,8 @@ import { LogOut, Shield, User } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
 import { logout } from "@/lib/helper";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { NotificationSettings } from "./notification-settings";
 
 export function ProfileSettings() {
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +55,10 @@ export function ProfileSettings() {
         </div>
         <Button variant="outline" size="sm" disabled>Change Password</Button>
       </div>
+
+      <Separator className="my-4"/>
+
+      <NotificationSettings />
     </Card>
   );
 }
