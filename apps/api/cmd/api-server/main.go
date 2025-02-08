@@ -99,6 +99,12 @@ func main() {
 	protected.HandleFunc("/settings", settingsHandler.GetSettings).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/settings", settingsHandler.UpdateSettings).Methods("PUT", "OPTIONS")
 
+	notificationService := notification.NewNotificationService(notificationRepo)
+	notificationHandler := notification.NewNotificationHandler(notificationService)
+
+	protected.HandleFunc("/notifications", notificationHandler.GetNotifications).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/notifications/mark-read", notificationHandler.MarkAsRead).Methods("POST", "OPTIONS")
+
 	// Start server
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", r); err != nil {

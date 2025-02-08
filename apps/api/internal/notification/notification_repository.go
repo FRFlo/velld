@@ -2,7 +2,6 @@ package notification
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,43 +25,20 @@ func (r *NotificationRepository) CreateNotification(n *Notification) error {
 	return err
 }
 
-func (r *NotificationRepository) GetUserNotifications(opts NotificationListOptions) ([]*NotificationList, int, error) {
-	whereClause := "WHERE user_id = $1"
-	args := []interface{}{opts.UserID}
-	argCount := 2
+func (r *NotificationRepository) GetUserNotifications(userID uuid.UUID) ([]*NotificationList, error) {
+	query := `
+        SELECT id, title, message, type, status, created_at
+        FROM notifications
+        WHERE user_id = $1
+        AND (status = 'unread' OR created_at > datetime('now', '-7 days'))
+        ORDER BY 
+            CASE WHEN status = 'unread' THEN 0 ELSE 1 END,
+            created_at DESC
+        LIMIT 50`
 
-	if opts.Status != nil {
-		whereClause += fmt.Sprintf(" AND status = $%d", argCount)
-		args = append(args, *opts.Status)
-		argCount++
-	}
-
-	if opts.Type != nil {
-		whereClause += fmt.Sprintf(" AND type = $%d", argCount)
-		args = append(args, *opts.Type)
-		argCount++
-	}
-
-	// Get total count
-	var total int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM notifications %s", whereClause)
-	if err := r.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
-		return nil, 0, err
-	}
-
-	// Get notifications
-	query := fmt.Sprintf(`
-		SELECT id, title, message, type, status, created_at
-		FROM notifications
-		%s
-		ORDER BY created_at DESC
-		LIMIT $%d OFFSET $%d
-	`, whereClause, argCount, argCount+1)
-
-	args = append(args, opts.Limit, opts.Offset)
-	rows, err := r.db.Query(query, args...)
+	rows, err := r.db.Query(query, userID)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -71,21 +47,21 @@ func (r *NotificationRepository) GetUserNotifications(opts NotificationListOptio
 		n := &NotificationList{}
 		err := rows.Scan(&n.ID, &n.Title, &n.Message, &n.Type, &n.Status, &n.CreatedAt)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 		notifications = append(notifications, n)
 	}
 
-	return notifications, total, nil
+	return notifications, nil
 }
 
-func (r *NotificationRepository) MarkAsRead(userID uuid.UUID, notificationIDs []uuid.UUID) error {
+func (r *NotificationRepository) MarkAsRead(userID uuid.UUID, notificationID uuid.UUID) error {
 	query := `
-		UPDATE notifications 
-		SET status = $1, updated_at = $2 
-		WHERE user_id = $3 AND id = ANY($4)`
+        UPDATE notifications 
+        SET status = $1, updated_at = $2
+        WHERE user_id = $3 AND id = $4`
 
-	_, err := r.db.Exec(query, StatusRead, time.Now().Format(time.RFC3339), userID, notificationIDs)
+	_, err := r.db.Exec(query, StatusRead, time.Now().Format(time.RFC3339), userID, notificationID)
 	return err
 }
 
