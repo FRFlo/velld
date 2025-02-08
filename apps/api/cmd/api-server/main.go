@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/dendianugerah/velld/internal/auth"
@@ -25,12 +24,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	encryptionKey := os.Getenv("ENCRYPTION_KEY")
-
-	if jwtSecret == "" || encryptionKey == "" {
-		log.Fatal("JWT_SECRET and ENCRYPTION_KEY must be set in .env file")
-	}
+	secrets := common.GetSecrets()
 
 	dbPath := filepath.Join("internal", "database", "velld.db")
 	db, err := database.Init(dbPath)
@@ -42,9 +36,9 @@ func main() {
 	connManager := connection.NewConnectionManager()
 
 	authRepo := auth.NewAuthRepository(db)
-	authService := auth.NewAuthService(authRepo, jwtSecret)
+	authService := auth.NewAuthService(authRepo, secrets.JWTSecret)
 
-	cryptoService, err := common.NewEncryptionService(encryptionKey)
+	cryptoService, err := common.NewEncryptionService(secrets.EncryptionKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +49,7 @@ func main() {
 	connHandler := connection.NewConnectionHandler(connService)
 	authHandler := auth.NewAuthHandler(authService)
 
-	authMiddleware := middleware.NewAuthMiddleware(jwtSecret)
+	authMiddleware := middleware.NewAuthMiddleware(secrets.JWTSecret)
 
 	r := mux.NewRouter()
 	r.Use(middleware.CORS)
