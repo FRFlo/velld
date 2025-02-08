@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dendianugerah/velld/internal/common" // Add this import
+	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/connection"
 	"github.com/dendianugerah/velld/internal/notification"
 	"github.com/dendianugerah/velld/internal/settings"
@@ -18,7 +18,6 @@ import (
 type BackupService struct {
 	connStorage      *connection.ConnectionRepository
 	backupDir        string
-	toolPaths        map[string]string
 	backupRepo       *BackupRepository
 	cronManager      *cron.Cron
 	cronEntries      map[string]cron.EntryID // map[scheduleID]entryID
@@ -30,7 +29,6 @@ type BackupService struct {
 func NewBackupService(
 	connStorage *connection.ConnectionRepository,
 	backupDir string,
-	toolPaths map[string]string,
 	backupRepo *BackupRepository,
 	settingsRepo *settings.SettingsRepository,
 	notificationRepo *notification.NotificationRepository,
@@ -40,16 +38,10 @@ func NewBackupService(
 		panic(err)
 	}
 
-	// Initialize default paths if not provided
-	if toolPaths == nil {
-		toolPaths = make(map[string]string)
-	}
-
 	cronManager := cron.New(cron.WithSeconds())
 	service := &BackupService{
 		connStorage:      connStorage,
 		backupDir:        backupDir,
-		toolPaths:        toolPaths,
 		backupRepo:       backupRepo,
 		settingsRepo:     settingsRepo,
 		notificationRepo: notificationRepo,
@@ -98,7 +90,7 @@ func (s *BackupService) recoverSchedules() error {
 	return nil
 }
 
-func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
+func (s *BackupService) CreateBackup(connectionID string, userID uuid.UUID) (*Backup, error) {
 	conn, err := s.connStorage.GetConnection(connectionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connection: %v", err)
@@ -126,11 +118,11 @@ func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
 	var cmd *exec.Cmd
 	switch conn.Type {
 	case "postgresql":
-		cmd = s.createPgDumpCmd(conn, backupPath)
+		cmd = s.createPgDumpCmd(conn, backupPath, userID)
 	case "mysql", "mariadb":
-		cmd = s.createMySQLDumpCmd(conn, backupPath)
+		cmd = s.createMySQLDumpCmd(conn, backupPath, userID)
 	case "mongodb":
-		cmd = s.createMongoDumpCmd(conn, backupPath)
+		cmd = s.createMongoDumpCmd(conn, backupPath, userID)
 	default:
 		return nil, fmt.Errorf("unsupported database type for backup: %s", conn.Type)
 	}

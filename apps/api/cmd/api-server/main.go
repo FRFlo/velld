@@ -75,13 +75,6 @@ func main() {
 	protected.HandleFunc("/connections", connHandler.ListConnections).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/connections", connHandler.UpdateConnection).Methods("PUT", "OPTIONS")
 
-	toolPaths := map[string]string{
-		"postgresql": common.GetDefaultBinaryPath("postgresql"),
-		"mysql":      common.GetDefaultBinaryPath("mysql"),
-		"mariadb":    common.GetDefaultBinaryPath("mariadb"),
-		"mongodb":    common.GetDefaultBinaryPath("mongodb"),
-	}
-
 	backupRepo := backup.NewBackupRepository(db)
 	settingsRepo := settings.NewSettingsRepository(db)
 	notificationRepo := notification.NewNotificationRepository(db)
@@ -89,7 +82,6 @@ func main() {
 	backupService := backup.NewBackupService(
 		connRepo,
 		"./backups",
-		toolPaths,
 		backupRepo,
 		settingsRepo,
 		notificationRepo,

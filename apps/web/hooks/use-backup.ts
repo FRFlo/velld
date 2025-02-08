@@ -33,9 +33,8 @@ export function useBackup() {
       await saveBackup(connectionId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['backups'],
-      });
+      queryClient.invalidateQueries({ queryKey: ['backups']});
+      queryClient.invalidateQueries({ queryKey: ['connections']});
       toast({
         title: "Success",
         description: "Backup started successfully",

@@ -25,13 +25,19 @@ func NewBackupHandler(bs *BackupService) *BackupHandler {
 }
 
 func (h *BackupHandler) CreateBackup(w http.ResponseWriter, r *http.Request) {
+	userID, err := common.GetUserIDFromContext(r.Context())
+	if err != nil {
+		response.SendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	var req BackupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.SendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	backup, err := h.backupService.CreateBackup(req.ConnectionID)
+	backup, err := h.backupService.CreateBackup(req.ConnectionID, userID)
 	if err != nil {
 		response.SendError(w, http.StatusInternalServerError, err.Error())
 		return

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"runtime"
 	"time"
+	"path/filepath"
+	"os"
+	"os/exec"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -44,31 +47,62 @@ func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	return userID, nil
 }
 
-var DefaultBinaryPaths = map[string]map[string]string{
+var CommonBinaryPaths = map[string][]string{
 	"windows": {
-		"postgresql": "C:\\Program Files\\PostgreSQL\\16\\bin",
-		"mysql":      "C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin",
-		"mariadb":    "C:\\Program Files\\MariaDB 10.6\\bin",
-		"mongodb":    "C:\\Program Files\\MongoDB\\Server\\6.0\\bin",
+		"C:\\Program Files\\PostgreSQL\\*\\bin",
+		"C:\\Program Files\\MySQL\\*\\bin",
+		"C:\\Program Files\\MariaDB*\\bin",
+		"C:\\Program Files\\MongoDB\\*\\bin",
 	},
 	"linux": {
-		"postgresql": "/usr/bin",
-		"mysql":      "/usr/bin",
-		"mariadb":    "/usr/bin",
-		"mongodb":    "/usr/bin",
+		"/usr/bin",
+		"/usr/local/bin",
+		"/opt/postgresql*/bin",
+		"/opt/mysql*/bin",
 	},
 	"darwin": {
-		"postgresql": "/opt/homebrew/bin",
-		"mysql":      "/opt/homebrew/bin",
-		"mariadb":    "/opt/homebrew/bin",
-		"mongodb":    "/opt/homebrew/bin",
+		"/opt/homebrew/bin",
+		"/usr/local/bin",
+		"/opt/homebrew/opt/postgresql@*/bin",
+		"/opt/homebrew/opt/mysql@*/bin",
 	},
 }
 
+func FindBinaryPath(dbType, toolName string, userPath *string) string {
+	execName := GetPlatformExecutableName(toolName)
 
-func GetDefaultBinaryPath(dbType string) string {
-	if paths, ok := DefaultBinaryPaths[runtime.GOOS]; ok {
-		return paths[dbType]
+	// 1. Try user-defined path if provided
+	if userPath != nil && *userPath != "" {
+		toolPath := filepath.Join(*userPath, execName)
+		if _, err := os.Stat(toolPath); err == nil {
+			return *userPath
+		}
 	}
+
+	// 2. Search common installation paths with wildcard support
+	if paths, ok := CommonBinaryPaths[runtime.GOOS]; ok {
+		for _, pathPattern := range paths {
+			matches, _ := filepath.Glob(pathPattern)
+			for _, path := range matches {
+				toolPath := filepath.Join(path, execName)
+				if _, err := os.Stat(toolPath); err == nil {
+					return path
+				}
+			}
+		}
+	}
+
+	// 3. Try PATH environment as last resort
+	if path, err := exec.LookPath(execName); err == nil {
+		return filepath.Dir(path)
+	}
+
 	return ""
+}
+
+func GetPlatformExecutableName(name string) string {
+	if runtime.GOOS == "windows" {
+		return name + ".exe"
+	}
+	return name
 }

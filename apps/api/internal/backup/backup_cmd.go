@@ -5,58 +5,51 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 
+	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/connection"
+	"github.com/google/uuid"
 )
 
+var requiredTools = map[string]string{
+	"postgresql": "pg_dump",
+	"mysql":      "mysqldump",
+	"mariadb":    "mysqldump",
+	"mongodb":    "mongodump",
+}
+
 func (s *BackupService) verifyBackupTools(dbType string) error {
-	requiredTools := map[string][]string{
-		"postgresql": {"pg_dump"},
-		"mysql":      {"mysqldump"},
-		"mariadb":    {"mysqldump"},
-		"mongodb":    {"mongodump"},
-	}
-
-	tools, exists := requiredTools[dbType]
-	if !exists {
+	if _, exists := requiredTools[dbType]; !exists {
 		return fmt.Errorf("unsupported database type: %s", dbType)
-	}
-
-	for _, tool := range tools {
-		if err := s.verifyTool(dbType, tool); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func (s *BackupService) verifyTool(dbType, toolName string) error {
-	if customPath, exists := s.toolPaths[dbType]; exists {
-		toolPath := filepath.Join(customPath, getPlatformExecutableName(toolName))
-		if _, err := os.Stat(toolPath); err == nil {
-			return nil
-		}
+func (s *BackupService) findDatabaseBinaryPath(dbType string, userID uuid.UUID) string {
+	userPath, err := s.settingsRepo.GetDatabaseBinaryPath(dbType, userID)
+	if err != nil || userPath == "" {
+		return common.FindBinaryPath(dbType, requiredTools[dbType], nil)
 	}
 
-	if path, err := exec.LookPath(getPlatformExecutableName(toolName)); err == nil {
-		s.toolPaths[dbType] = filepath.Dir(path)
+	if path := common.FindBinaryPath(dbType, requiredTools[dbType], &userPath); path != "" {
+		if path != userPath {
+			fmt.Printf("Warning: User-specified path %s failed, using found path: %s\n", userPath, path)
+		}
+		return path
+	}
+
+	return ""
+}
+
+func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath("postgresql", userID)
+	if binaryPath == "" {
 		return nil
 	}
 
-	return fmt.Errorf("required tool %s is not installed or not in configured paths", toolName)
-}
+	binPath := filepath.Join(binaryPath, common.GetPlatformExecutableName(requiredTools["postgresql"]))
 
-func getPlatformExecutableName(base string) string {
-	if runtime.GOOS == "windows" {
-		return base + ".exe"
-	}
-	return base
-}
-
-func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
-	pgDumpPath := filepath.Join(s.toolPaths["postgresql"], getPlatformExecutableName("pg_dump"))
-	cmd := exec.Command(pgDumpPath,
+	cmd := exec.Command(binPath,
 		"-h", conn.Host,
 		"-p", fmt.Sprintf("%d", conn.Port),
 		"-U", conn.Username,
@@ -68,9 +61,14 @@ func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outpu
 	return cmd
 }
 
-func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
-	mysqlDumpPath := filepath.Join(s.toolPaths[conn.Type], getPlatformExecutableName("mysqldump"))
-	cmd := exec.Command(mysqlDumpPath,
+func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath(conn.Type, userID)
+	if binaryPath == "" {
+		return nil
+	}
+
+	binPath := filepath.Join(binaryPath, common.GetPlatformExecutableName(requiredTools[conn.Type]))
+	cmd := exec.Command(binPath,
 		"-h", conn.Host,
 		"-P", fmt.Sprintf("%d", conn.Port),
 		"-u", conn.Username,
@@ -81,9 +79,13 @@ func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, ou
 	return cmd
 }
 
-func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
-	mongoDumpPath := filepath.Join(s.toolPaths["mongodb"], getPlatformExecutableName("mongodump"))
+func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath("mongodb", userID)
+	if binaryPath == "" {
+		return nil
+	}
 
+	binPath := filepath.Join(binaryPath, common.GetPlatformExecutableName(requiredTools["mongodb"]))
 	args := []string{
 		"--host", conn.Host,
 		"--port", fmt.Sprintf("%d", conn.Port),
@@ -99,6 +101,5 @@ func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, ou
 		args = append(args, "--password", conn.Password)
 	}
 
-	cmd := exec.Command(mongoDumpPath, args...)
-	return cmd
+	return exec.Command(binPath, args...)
 }
