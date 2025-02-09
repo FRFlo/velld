@@ -1,2 +1,0 @@
-- need to install goose
--  openssl rand -hex 32
