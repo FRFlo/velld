@@ -11,37 +11,13 @@ import { statusColors } from "@/types/base";
 import { HistoryListSkeleton } from "@/components/ui/skeleton/history-list";
 import { calculateDuration, formatSize } from "@/lib/helper";
 import { HistoryFilters } from "./history-filters";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell } from "lucide-react";
 import { CustomPagination } from "@/components/ui/custom-pagination";
-
-// Sample notification data
-const notifications = [
-  {
-    id: 1,
-    title: "Backup Completed",
-    message: "Database backup for 'Production DB' completed successfully",
-    time: "2 minutes ago",
-    status: "completed"
-  },
-  {
-    id: 2,
-    title: "Backup Failed",
-    message: "Backup failed for 'Test DB' due to connection error",
-    time: "1 hour ago",
-    status: "failed"
-  },
-  {
-    id: 3,
-    title: "Backup Started",
-    message: "New backup started for 'Development DB'",
-    time: "2 hours ago",
-    status: "running"
-  },
-];
+import { useNotifications } from '@/hooks/use-notifications';
+import { NotificationSidebar } from "./notification-sidebar";
 
 export function HistoryList() {
   const { backups, isLoading, pagination, page, setPage, downloadBackupFile, isDownloading } = useBackup();
+  const { notifications, isLoading: isLoadingNotifications, markNotificationsAsRead } = useNotifications();
   const totalPages = pagination?.total_pages || 1;
 
   return (
@@ -112,40 +88,11 @@ export function HistoryList() {
             )}
           </div>
 
-          {/* Notification sidebar */}
-          <div className="w-80 border-l pl-4">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-sm font-semibold">Notifications</h4>
-              <Badge variant="secondary" className="text-xs">
-                {notifications.length} new
-              </Badge>
-            </div>
-            <ScrollArea className="h-[600px]">
-              <div className="space-y-4 pr-4">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="p-3 rounded-lg bg-background/50 border"
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className="p-1.5 rounded-md bg-primary/10">
-                        <Bell className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <h5 className="text-sm font-medium">{notification.title}</h5>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {notification.time}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
+          <NotificationSidebar 
+            notifications={notifications}
+            isLoading={isLoadingNotifications}
+            onMarkAsRead={markNotificationsAsRead}
+          />
         </div>
 
         {pagination && (
