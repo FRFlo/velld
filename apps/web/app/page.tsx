@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-x-hidden">
         <div className="h-full px-8 py-6 space-y-8">
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>

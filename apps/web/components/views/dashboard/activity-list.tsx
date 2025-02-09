@@ -29,34 +29,60 @@ export function ActivityList() {
         key={item.id}
         className="group p-4 rounded-lg border border-border/50 hover:border-border/80 transition-colors"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="p-2.5 rounded-md bg-primary/5">
-              <Database className="h-5 w-5 text-primary" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+          <div className="flex items-start sm:items-center space-x-4">
+            <div className={cn(
+              "p-2.5 rounded-md shrink-0",
+              item.status === 'completed' ? "bg-emerald-500/10" : 
+              item.status === 'failed' ? "bg-red-500/10" : "bg-primary/5"
+            )}>
+              <Database className={cn(
+                "h-5 w-5",
+                item.status === 'completed' ? "text-emerald-500" :
+                item.status === 'failed' ? "text-red-500" : "text-primary"
+              )} />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <p className="font-medium">{item.path.split('\\').pop()}</p>
-                <Badge variant="outline" className="text-xs font-normal">
-                  {typeLabels[item.database_type as DatabaseType]}
-                </Badge>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium truncate">{item.path.split('\\').pop()}</p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs font-normal">
+                    {typeLabels[item.database_type as DatabaseType]}
+                  </Badge>
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-xs sm:hidden",
+                      statusColors[item.status as StatusColor]
+                    )}
+                  >
+                    {item.status}
+                  </Badge>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1.5">
-                <HardDrive className="h-3.5 w-3.5" />
-                <span>{connection?.name}</span>
-                <span className="text-muted-foreground/40">•</span>
-                <span>{formatSize(item.size)}</span>
-                <span className="text-muted-foreground/40">•</span>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1.5">
+                <span className="items-center gap-1 hidden sm:flex">
+                  <HardDrive className="h-3.5 w-3.5" />
+                  <span className="truncate max-w-[120px] sm:max-w-none">{connection?.name}</span>
+                </span>
+                <span className="hidden sm:inline text-muted-foreground/40">•</span>
+                <span className="hidden sm:block">{formatSize(item.size)}</span>
+                <span className="hidden sm:inline text-muted-foreground/40">•</span>
                 <span className="flex items-center">
                   <Clock className="h-3.5 w-3.5 mr-1" />
-                  {formatDistanceToNow(parseISO(item.created_at), { addSuffix: true })}
+                  <span className="truncate max-w-[120px] sm:max-w-none">
+                    {formatDistanceToNow(parseISO(item.created_at), { addSuffix: true })}
+                  </span>
                 </span>
               </div>
             </div>
           </div>
           <Badge 
             variant="outline" 
-            className={`text-xs ${statusColors[item.status as StatusColor]}`}
+            className={cn(
+              "hidden sm:inline-flex text-xs",
+              statusColors[item.status as StatusColor]
+            )}
           >
             {item.status}
           </Badge>
@@ -70,40 +96,42 @@ export function ActivityList() {
       key={connection.id}
       className="group p-4 rounded-lg border border-border/50 hover:border-border/80 transition-colors"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-4">
+        <div className="flex items-start sm:items-center space-x-4">
           <div className={cn(
-            "p-2.5 rounded-md",
+            "p-2.5 rounded-md shrink-0",
             "bg-emerald-500/10"
           )}>
             <Database className="h-5 w-5 text-emerald-500" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <p className="font-medium">{connection.name}</p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-medium truncate">{connection.name}</p>
               <Badge variant="outline" className="text-xs font-normal">
                 {typeLabels[connection.type]}
               </Badge>
             </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground mt-1.5">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1.5">
               <span className="flex items-center">
                 <Calendar className="h-3.5 w-3.5 mr-1" />
                 {getScheduleFrequency(connection.cron_schedule)}
               </span>
               {connection.retention_days && (
-                <>
-                  <span className="text-muted-foreground/40">•</span>
-                  <span>Kept for {connection.retention_days} days</span>
-                </>
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline text-muted-foreground/40">•</span>
+                  <span>{connection.retention_days} days retention</span>
+                </div>
               )}
               {connection.last_backup_time && (
-                <>
-                  <span className="text-muted-foreground/40">•</span>
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline text-muted-foreground/40">•</span>
                   <span className="flex items-center">
                     <Clock className="h-3.5 w-3.5 mr-1" />
-                    Last backup {formatDistanceToNow(parseISO(connection.last_backup_time), { addSuffix: true })}
+                    <span className="truncate">
+                      Last backup {formatDistanceToNow(parseISO(connection.last_backup_time), { addSuffix: true })}
+                    </span>
                   </span>
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -114,7 +142,7 @@ export function ActivityList() {
 
   return (
     <Card className="col-span-3 backdrop-blur-xl bg-card/50">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <Tabs defaultValue="recent" className="w-full">
           <div className="flex justify-between items-center mb-4">
             <TabsList className="h-8">
@@ -150,4 +178,4 @@ export function ActivityList() {
       </div>
     </Card>
   );
-} 
+}
