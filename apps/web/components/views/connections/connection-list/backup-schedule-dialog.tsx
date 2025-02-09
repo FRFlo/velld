@@ -22,6 +22,7 @@ import { useState, useEffect } from 'react';
 import { getScheduleFrequency } from '@/lib/helper';
 
 const CRON_SCHEDULES = {
+  'test': '0 */1 * * * *',  // Run every 1 minutes
   'hourly': '0 0 * * * *',
   'daily': '0 0 0 * * *',
   'weekly': '0 0 0 * * 0',
@@ -151,6 +152,7 @@ export function BackupScheduleDialog({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="test">Every Minute (Test)</SelectItem>
                     <SelectItem value="hourly">Every Hour</SelectItem>
                     <SelectItem value="daily">Daily</SelectItem>
                     <SelectItem value="weekly">Weekly</SelectItem>
@@ -186,4 +188,4 @@ export function BackupScheduleDialog({
       </DialogContent>
     </Dialog>
   );
-} 
+}

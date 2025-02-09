@@ -34,6 +34,7 @@ export function calculateDuration(start: string, end: string) {
 export const getScheduleFrequency = (cronSchedule: string | undefined) => {
     if (!cronSchedule) return '';
     switch (cronSchedule) {
+        case '0 */1 * * * *': return 'test';  // Updated to match 1-minute schedule
         case '0 0 * * * *': return 'hourly';
         case '0 0 0 * * *': return 'daily';
         case '0 0 0 * * 0': return 'weekly';

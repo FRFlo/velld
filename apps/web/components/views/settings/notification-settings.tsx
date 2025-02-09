@@ -27,9 +27,11 @@ export function NotificationSettings() {
               <div className="p-2 rounded-full bg-muted/40">
                 <Bell className="w-5 h-5 text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-4 w-56" />
+              <div>
+                <h3 className="text-lg font-medium">Dashboard Notifications</h3>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications in the dashboard
+                </p>
               </div>
             </div>
             <Skeleton className="h-6 w-12" />
@@ -42,9 +44,11 @@ export function NotificationSettings() {
                 <div className="p-2 rounded-full bg-muted/40">
                   <Mail className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-36" />
-                  <Skeleton className="h-4 w-48" />
+                <div>
+                  <h3 className="text-lg font-medium">Email Notifications</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via email
+                  </p>
                 </div>
               </div>
               <Skeleton className="h-6 w-12" />
@@ -58,9 +62,11 @@ export function NotificationSettings() {
                 <div className="p-2 rounded-full bg-muted/40">
                   <Webhook className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-44" />
-                  <Skeleton className="h-4 w-52" />
+                <div>
+                  <h3 className="text-lg font-medium">Webhook Notifications</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via webhook
+                  </p>
                 </div>
               </div>
               <Skeleton className="h-6 w-12" />
@@ -142,7 +148,7 @@ export function NotificationSettings() {
                   <Label>Email Address</Label>
                   <Input
                     type="email"
-                    defaultValue={settings.email}
+                    defaultValue={settings?.email || ''}
                     onChange={(e) => handleChange('email', e.target.value)}
                   />
                 </div>
@@ -157,7 +163,7 @@ export function NotificationSettings() {
                   <Label>SMTP Port</Label>
                   <Input
                     type="number"
-                    defaultValue={settings.smtp_port}
+                    defaultValue={settings?.smtp_port?.toString() || ''}
                     onChange={(e) => handleChange('smtp_port', parseInt(e.target.value))}
                   />
                 </div>
