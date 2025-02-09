@@ -21,7 +21,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("No .env file found, will use environment variables or generate new secrets")
 	}
 
 	secrets := common.GetSecrets()
