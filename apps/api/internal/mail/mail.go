@@ -1,40 +1,89 @@
 package mail
 
 import (
-    "fmt"
-    "net/smtp"
+	"crypto/tls"
+	"fmt"
+	"log"
+	"net/smtp"
 )
 
 type SMTPConfig struct {
-    Host     string
-    Port     int
-    Username string
-    Password string
+	Host     string
+	Port     int
+	Username string
+	Password string
 }
 
 type Message struct {
-    From    string
-    To      string
-    Subject string
-    Body    string
+	From    string
+	To      string
+	Subject string
+	Body    string
 }
 
 func SendEmail(config *SMTPConfig, msg *Message) error {
-    auth := smtp.PlainAuth("", config.Username, config.Password, config.Host)
-    
-    emailMsg := fmt.Sprintf("From: %s\r\n"+
-        "To: %s\r\n"+
-        "Subject: %s\r\n"+
-        "\r\n"+
-        "%s\r\n", msg.From, msg.To, msg.Subject, msg.Body)
+	tlsConfig := &tls.Config{
+		ServerName:         config.Host,
+		InsecureSkipVerify: false,
+	}
 
-    addr := fmt.Sprintf("%s:%d", config.Host, config.Port)
-    
-    return smtp.SendMail(
-        addr,
-        auth,
-        msg.From,
-        []string{msg.To},
-        []byte(emailMsg),
-    )
+	addr := fmt.Sprintf("%s:%d", config.Host, config.Port)
+	auth := smtp.PlainAuth("", config.Username, config.Password, config.Host)
+
+	emailMsg := fmt.Sprintf("From: %s\r\n"+
+		"To: %s\r\n"+
+		"Subject: %s\r\n"+
+		"MIME-Version: 1.0\r\n"+
+		"Content-Type: text/plain; charset=utf-8\r\n"+
+		"\r\n"+
+		"%s\r\n", msg.From, msg.To, msg.Subject, msg.Body)
+
+	conn, err := tls.Dial("tcp", addr, tlsConfig)
+	if err != nil {
+		log.Printf("Failed to create TLS connection: %v", err)
+		return err
+	}
+	defer conn.Close()
+
+	client, err := smtp.NewClient(conn, config.Host)
+	if err != nil {
+		log.Printf("Failed to create SMTP client: %v", err)
+		return err
+	}
+	defer client.Close()
+
+	if err = client.Auth(auth); err != nil {
+		log.Printf("Failed to authenticate: %v", err)
+		return err
+	}
+
+	if err = client.Mail(msg.From); err != nil {
+		log.Printf("Failed to set sender: %v", err)
+		return err
+	}
+	if err = client.Rcpt(msg.To); err != nil {
+		log.Printf("Failed to set recipient: %v", err)
+		return err
+	}
+
+	w, err := client.Data()
+	if err != nil {
+		log.Printf("Failed to create data writer: %v", err)
+		return err
+	}
+
+	_, err = w.Write([]byte(emailMsg))
+	if err != nil {
+		log.Printf("Failed to write email body: %v", err)
+		return err
+	}
+
+	err = w.Close()
+	if err != nil {
+		log.Printf("Failed to close data writer: %v", err)
+		return err
+	}
+
+	log.Printf("Email sent successfully to %s", msg.To)
+	return client.Quit()
 }
