@@ -18,10 +18,6 @@ type UserSettings struct {
 	SMTPPort          *int      `json:"smtp_port,omitempty"`
 	SMTPUsername      *string   `json:"smtp_username,omitempty"`
 	SMTPPassword      *string   `json:"smtp_password,omitempty"`
-	PostgresqlBinPath *string   `json:"postgresql_bin_path,omitempty"`
-	MysqlBinPath      *string   `json:"mysql_bin_path,omitempty"`
-	MariadbBinPath    *string   `json:"mariadb_bin_path,omitempty"`
-	MongodbBinPath    *string   `json:"mongodb_bin_path,omitempty"`
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
@@ -36,8 +32,4 @@ type UpdateSettingsRequest struct {
 	SMTPPort          *int    `json:"smtp_port,omitempty"`
 	SMTPUsername      *string `json:"smtp_username,omitempty"`
 	SMTPPassword      *string `json:"smtp_password,omitempty"`
-	PostgresqlBinPath string  `json:"postgresql_bin_path,omitempty"`
-	MysqlBinPath      string  `json:"mysql_bin_path,omitempty"`
-	MariadbBinPath    string  `json:"mariadb_bin_path,omitempty"`
-	MongodbBinPath    string  `json:"mongodb_bin_path,omitempty"`
 }

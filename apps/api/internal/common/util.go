@@ -3,11 +3,11 @@ package common
 import (
 	"context"
 	"fmt"
-	"runtime"
-	"time"
-	"path/filepath"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
@@ -68,16 +68,16 @@ var CommonBinaryPaths = map[string][]string{
 	},
 }
 
-func FindBinaryPath(dbType, toolName string, userPath *string) string {
+func FindBinaryPath(dbType, toolName string) string {
 	execName := GetPlatformExecutableName(toolName)
 
 	// 1. Try user-defined path if provided
-	if userPath != nil && *userPath != "" {
-		toolPath := filepath.Join(*userPath, execName)
-		if _, err := os.Stat(toolPath); err == nil {
-			return *userPath
-		}
-	}
+	// if userPath != nil && *userPath != "" {
+	// 	toolPath := filepath.Join(*userPath, execName)
+	// 	if _, err := os.Stat(toolPath); err == nil {
+	// 		return *userPath
+	// 	}
+	// }
 
 	// 2. Search common installation paths with wildcard support
 	if paths, ok := CommonBinaryPaths[runtime.GOOS]; ok {

@@ -90,7 +90,7 @@ func (s *BackupService) recoverSchedules() error {
 	return nil
 }
 
-func (s *BackupService) CreateBackup(connectionID string, userID uuid.UUID) (*Backup, error) {
+func (s *BackupService) CreateBackup(connectionID string) (*Backup, error) {
 	conn, err := s.connStorage.GetConnection(connectionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connection: %v", err)
@@ -118,11 +118,11 @@ func (s *BackupService) CreateBackup(connectionID string, userID uuid.UUID) (*Ba
 	var cmd *exec.Cmd
 	switch conn.Type {
 	case "postgresql":
-		cmd = s.createPgDumpCmd(conn, backupPath, userID)
+		cmd = s.createPgDumpCmd(conn, backupPath)
 	case "mysql", "mariadb":
-		cmd = s.createMySQLDumpCmd(conn, backupPath, userID)
+		cmd = s.createMySQLDumpCmd(conn, backupPath)
 	case "mongodb":
-		cmd = s.createMongoDumpCmd(conn, backupPath, userID)
+		cmd = s.createMongoDumpCmd(conn, backupPath)
 	default:
 		return nil, fmt.Errorf("unsupported database type for backup: %s", conn.Type)
 	}

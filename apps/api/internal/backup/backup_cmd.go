@@ -25,24 +25,16 @@ func (s *BackupService) verifyBackupTools(dbType string) error {
 	return nil
 }
 
-func (s *BackupService) findDatabaseBinaryPath(dbType string, userID uuid.UUID) string {
-	userPath, err := s.settingsRepo.GetDatabaseBinaryPath(dbType, userID)
-	if err != nil || userPath == "" {
-		return common.FindBinaryPath(dbType, requiredTools[dbType], nil)
-	}
-
-	if path := common.FindBinaryPath(dbType, requiredTools[dbType], &userPath); path != "" {
-		if path != userPath {
-			fmt.Printf("Warning: User-specified path %s failed, using found path: %s\n", userPath, path)
-		}
+func (s *BackupService) findDatabaseBinaryPath(dbType string) string {
+	if path := common.FindBinaryPath(dbType, requiredTools[dbType]); path != "" {
 		return path
 	}
 
 	return ""
 }
 
-func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
-	binaryPath := s.findDatabaseBinaryPath("postgresql", userID)
+func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath("postgresql")
 	if binaryPath == "" {
 		return nil
 	}
@@ -61,8 +53,8 @@ func (s *BackupService) createPgDumpCmd(conn *connection.StoredConnection, outpu
 	return cmd
 }
 
-func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
-	binaryPath := s.findDatabaseBinaryPath(conn.Type, userID)
+func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath(conn.Type)
 	if binaryPath == "" {
 		return nil
 	}
@@ -79,8 +71,8 @@ func (s *BackupService) createMySQLDumpCmd(conn *connection.StoredConnection, ou
 	return cmd
 }
 
-func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, outputPath string, userID uuid.UUID) *exec.Cmd {
-	binaryPath := s.findDatabaseBinaryPath("mongodb", userID)
+func (s *BackupService) createMongoDumpCmd(conn *connection.StoredConnection, outputPath string) *exec.Cmd {
+	binaryPath := s.findDatabaseBinaryPath("mongodb")
 	if binaryPath == "" {
 		return nil
 	}
