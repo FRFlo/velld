@@ -25,6 +25,7 @@ A database backup management and automation tool. Velld provides a user-friendly
     - [Running Web UI Locally](#running-web-ui-locally)
   - [Contribution](#contribution)
     - [Guidelines](#guidelines)
+  - [License](#license)
 
 ## Features
 
@@ -150,3 +151,7 @@ Contributions are welcome! If you find a bug or have a feature request, please o
 1. Fork the repository and create a new branch.
 2. Make your changes and ensure tests pass.
 3. Submit a pull request with a clear description of the change.
+
+## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
