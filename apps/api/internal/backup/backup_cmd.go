@@ -8,7 +8,6 @@ import (
 
 	"github.com/dendianugerah/velld/internal/common"
 	"github.com/dendianugerah/velld/internal/connection"
-	"github.com/google/uuid"
 )
 
 var requiredTools = map[string]string{
