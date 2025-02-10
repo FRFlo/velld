@@ -1,0 +1,40 @@
+# Dependencies and build
+**/node_modules
+**/.next
+**/out
+**/dist
+**/build
+**/vendor
+**/.pnp
+**/.pnp.js
+
+# Development files
+**/.git
+**/.gitignore
+**/.env*
+**/.air.toml
+**/*.log
+**/*.md
+**/.editorconfig
+**/coverage
+**/.nyc_output
+
+# IDE
+**/.idea
+**/.vscode
+**/*.swp
+**/*.swo
+
+# Database and backups
+**/*.db
+**/*.sqlite*
+**/backups
+
+# Build artifacts
+**/*.exe
+**/*.test
+**/*.out
+
+# Project specific
+**/docs
+**/test

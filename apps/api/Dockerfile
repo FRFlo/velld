@@ -13,7 +13,11 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o main cmd/api-server/main.go
 
 FROM alpine:latest
 
-RUN apk add --no-cache sqlite-libs
+RUN apk add --no-cache \
+    sqlite-libs \
+    postgresql-client \
+    mysql-client \
+    mongodb-tools
 
 WORKDIR /app
 

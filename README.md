@@ -18,7 +18,6 @@ A database backup management and automation tool. Velld provides a user-friendly
     - [Environment Variables](#environment-variables)
       - [**Environment Variable Details:**](#environment-variable-details)
     - [Binary Path Detection](#binary-path-detection)
-  - [To-Do List](#to-do-list)
   - [Development Setup](#development-setup)
     - [Prerequisites](#prerequisites)
     - [Running API Locally](#running-api-locally)
@@ -86,7 +85,8 @@ cp .env.example .env
 Then, configure the following environment variables in `.env`:
 
 ```env
-API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:8080
+
 JWT_SECRET=your-jwt-secret
 ENCRYPTION_KEY=your-encryption-key
 ```
@@ -110,14 +110,6 @@ By default, Velld will search for database dump binaries (`pg_dump`, `mysqldump`
 - **MacOS:** `/opt/homebrew/bin`, `/usr/local/bin`
 
 In a future update, users will be able to manually configure the binary path in the web application.
-
-## To-Do List
-
-- [ ] Allow users to define custom paths for database binaries from the web application
-- [ ] Improve mobile view for better responsiveness
-- [ ] Add support for more databases
-- [ ] Implement additional storage options (AWS S3, Google Drive, etc.)
-- [ ] Enhance notification system
 
 ## Development Setup
 
