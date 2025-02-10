@@ -397,23 +397,31 @@ func (r *BackupRepository) UpdateBackupStatusAndSchedule(id string, status strin
 }
 
 func (r *BackupRepository) GetBackupStats(userID uuid.UUID) (*BackupStats, error) {
-	stats := &BackupStats{}
+	stats := &BackupStats{
+		TotalBackups:    0,
+		FailedBackups:   0,
+		TotalSize:       0,
+		AverageDuration: 0,
+		SuccessRate:     100, // Default to 100% if no backups
+	}
 
-	// Get total backups, failed backups, and total size for all user's connections
 	err := r.db.QueryRow(`
 		SELECT 
-			COUNT(*) as total_backups,
-			SUM(CASE WHEN b.status != 'completed' THEN 1 ELSE 0 END) as failed_backups,
-			COALESCE(SUM(b.size), 0) as total_size
+				COALESCE(COUNT(*), 0) as total_backups,
+				COALESCE(SUM(CASE WHEN b.status != 'completed' THEN 1 ELSE 0 END), 0) as failed_backups,
+				COALESCE(SUM(b.size), 0) as total_size
 		FROM backups b
 		INNER JOIN connections c ON b.connection_id = c.id
 		WHERE c.user_id = $1
 	`, userID).Scan(&stats.TotalBackups, &stats.FailedBackups, &stats.TotalSize)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return stats, nil // Return default values if no data
+		}
 		return nil, fmt.Errorf("failed to get backup counts: %v", err)
 	}
 
-	// Calculate success rate
+	// Calculate success rate only if there are backups
 	if stats.TotalBackups > 0 {
 		successfulBackups := stats.TotalBackups - stats.FailedBackups
 		stats.SuccessRate = float64(successfulBackups) / float64(stats.TotalBackups) * 100
