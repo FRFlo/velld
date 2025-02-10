@@ -8,7 +8,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+
+	"github.com/joho/godotenv"
 )
 
 type Secrets struct {
@@ -16,7 +19,7 @@ type Secrets struct {
 	EncryptionKey string
 }
 
-var secretsFilePath = filepath.Join(".", ".env")
+var secretsFilePath = filepath.Join("..", "..", ".env")
 
 var once sync.Once
 var instance *Secrets
@@ -29,6 +32,12 @@ func GetSecrets() *Secrets {
 }
 
 func loadOrGenerateSecrets() *Secrets {
+
+	err := godotenv.Load(secretsFilePath)
+	if err != nil {
+		log.Println("[WARN] No .env file found, will generate secrets if missing")
+	}
+
 	jwtSecret := getOrGenerateSecret("JWT_SECRET")
 	encryptionKey := getOrGenerateSecret("ENCRYPTION_KEY")
 
@@ -65,7 +74,6 @@ func generateSecureHexKey() string {
 	return hex.EncodeToString(key) // Convert to hex string
 }
 
-
 // Generate a secure random base64 key (for JWT)
 func generateSecureBase64Key() string {
 	bytes := make([]byte, 32)
@@ -77,6 +85,26 @@ func generateSecureBase64Key() string {
 }
 
 func saveSecretsToFile(jwtSecret, encryptionKey string) {
-	content := fmt.Sprintf("JWT_SECRET=%s\nENCRYPTION_KEY=%s\n", jwtSecret, encryptionKey)
-	os.WriteFile(secretsFilePath, []byte(content), 0600) // Secure permissions
+	existingContent, _ := os.ReadFile(secretsFilePath)
+	existingEnv := string(existingContent)
+
+	if !containsLine(existingEnv, "JWT_SECRET=") {
+		existingEnv += fmt.Sprintf("\nJWT_SECRET=%s", jwtSecret)
+	}
+
+	if !containsLine(existingEnv, "ENCRYPTION_KEY=") {
+		existingEnv += fmt.Sprintf("\nENCRYPTION_KEY=%s", encryptionKey)
+	}
+
+	os.WriteFile(secretsFilePath, []byte(existingEnv), 0600)
+}
+
+func containsLine(envContent, prefix string) bool {
+	lines := strings.Split(envContent, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, prefix) {
+			return true
+		}
+	}
+	return false
 }

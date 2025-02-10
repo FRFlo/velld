@@ -14,16 +14,10 @@ import (
 	"github.com/dendianugerah/velld/internal/notification"
 	"github.com/dendianugerah/velld/internal/settings"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found, will use environment variables or generate new secrets")
-	}
-
 	secrets := common.GetSecrets()
 
 	dbPath := filepath.Join("internal", "database", "velld.db")
