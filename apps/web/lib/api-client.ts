@@ -1,4 +1,12 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+let API_BASE: string | null = null;
+
+async function getConfig() {
+  if (!API_BASE) {
+    const { apiUrl } = await fetch('/api/config').then(res => res.json());
+    API_BASE = apiUrl;
+  }
+  return API_BASE;
+}
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -15,6 +23,7 @@ export async function apiRequest<T>(
   endpoint: string,
   options: ExtendedRequestInit = {}
 ): Promise<T> {
+  const apiUrl = await getConfig();
   const token = localStorage.getItem('token');
   const headers = {
     'Content-Type': 'application/json',
@@ -22,7 +31,7 @@ export async function apiRequest<T>(
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${apiUrl}${endpoint}`, {
     ...options,
     headers,
   });
