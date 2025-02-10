@@ -2,33 +2,56 @@
 
 A database backup management and automation tool. Velld provides a user-friendly interface for scheduling, managing, and monitoring database backups, ensuring data security and easy recovery.
 
+## Table of Contents
+
+- [Velld](#velld)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Screenshots](#screenshots)
+    - [Dashboard Overview](#dashboard-overview)
+    - [Connection Management](#connection-management)
+    - [History](#history)
+  - [Supported Databases](#supported-databases)
+  - [Installation](#installation)
+    - [Using Docker](#using-docker)
+  - [Configuration](#configuration)
+    - [Environment Variables](#environment-variables)
+      - [**Environment Variable Details:**](#environment-variable-details)
+    - [Binary Path Detection](#binary-path-detection)
+  - [To-Do List](#to-do-list)
+  - [Development Setup](#development-setup)
+    - [Prerequisites](#prerequisites)
+    - [Running API Locally](#running-api-locally)
+    - [Running Web UI Locally](#running-web-ui-locally)
+  - [Contribution](#contribution)
+    - [Guidelines](#guidelines)
+
 ## Features
 
-- 🗄️ Support for multiple database types
-- ⏰ Automated backup scheduling
-- 🔔 Notifications system
+- 🗄️ **Support for multiple database types**
+- ⏰ **Automated backup scheduling**
+- 🔔 **Notifications system**
 
 ## Screenshots
 
-#### Dashboard Overview
+### Dashboard Overview
 ![Dashboard](docs/images/dashboard.png)
 Monitor backup statistics and recent activities.
 
-#### Connection Management
+### Connection Management
 ![Connections](docs/images/connections.png)
 Easily manage multiple database connections.
 
-#### History
+### History
 ![History](docs/images/history.png)
 View detailed backup history and logs.
 
-## Currently Supported Databases
+## Supported Databases
 
 - **PostgreSQL**
 - **MySQL**
 - **MongoDB**
-
-*More databases will be supported in future releases.*
+- **More database support coming soon!**
 
 ## Installation
 
@@ -46,25 +69,54 @@ docker compose up -d
 ```
 
 Once started, the application will be available at:
-- **Web Interface**: http://localhost:3000
-- **API**: http://localhost:8080
+- **Web Interface**: [http://localhost:3000](http://localhost:3000)
+- **API**: [http://localhost:8080](http://localhost:8080)
 
 ## Configuration
 
-### Backend Configuration (`apps/api/.env`)
+### Environment Variables
+
+Create a `.env` file in the root directory or copy `.env.example`:
+
+```sh
+cp .env.example .env
+```
+
+Then, configure the following environment variables in `.env`:
 
 ```env
-# Authentication
+API_URL=http://localhost:8080
 JWT_SECRET=your-jwt-secret
 ENCRYPTION_KEY=your-encryption-key
 ```
 
-### Frontend Configuration (`apps/web/.env`)
+#### **Environment Variable Details:**
 
-```env
-# API Connection
-NEXT_PUBLIC_API_URL=http://localhost:8080
-```
+| Variable          | Description                                                   | Required?     | Default Behavior                  |
+|------------------|---------------------------------------------------------------|--------------|----------------------------------|
+| `JWT_SECRET`     | Secret key for signing JWT tokens.                           | ❌ Optional  | Auto-generated if missing        |
+| `ENCRYPTION_KEY` | Key for encrypting sensitive data (e.g., database credentials). | ❌ Optional  | Auto-generated if missing        |
+| `API_URL`        | Base URL for the API used by the frontend.                   | ✅ Required  | None                             |
+
+> **Note:** If `JWT_SECRET` or `ENCRYPTION_KEY` is missing from `.env`, Velld will automatically generate secure values and save them to the `.env` file.
+
+### Binary Path Detection
+
+By default, Velld will search for database dump binaries (`pg_dump`, `mysqldump`, `mongodump`, etc.) in common system paths:
+
+- **Windows:** `C:\Program Files\<Database>\bin`
+- **Linux:** `/usr/bin`, `/usr/local/bin`, `/opt/<Database>/bin`
+- **MacOS:** `/opt/homebrew/bin`, `/usr/local/bin`
+
+In a future update, users will be able to manually configure the binary path in the web application.
+
+## To-Do List
+
+- [ ] Allow users to define custom paths for database binaries from the web application
+- [ ] Improve mobile view for better responsiveness
+- [ ] Add support for more databases
+- [ ] Implement additional storage options (AWS S3, Google Drive, etc.)
+- [ ] Enhance notification system
 
 ## Development Setup
 
